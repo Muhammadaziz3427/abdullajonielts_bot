@@ -10,6 +10,33 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+import asyncio
+import random
+import sqlite3
+
+def retry_on_lock(attempts: int = 5, base_delay: float = 0.1):
+    """Decorator to retry a coroutine when SQLite reports a locked database.
+
+    It catches ``sqlite3.OperationalError`` containing "database is locked" and
+    retries with exponential back‑off. After ``attempts`` failures the original
+    exception is re‑raised.
+    """
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            delay = base_delay
+            for attempt in range(attempts):
+                try:
+                    return await func(*args, **kwargs)
+                except sqlite3.OperationalError as e:
+                    if "database is locked" in str(e).lower():
+                        if attempt == attempts - 1:
+                            raise
+                        await asyncio.sleep(delay)
+                        delay *= 2
+                    else:
+                        raise
+        return wrapper
+    return decorator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,10 +63,14 @@ def _utc_now() -> str:
 
 @asynccontextmanager
 async def get_connection() -> AsyncGenerator[aiosqlite.Connection, None]:
+    """Create a SQLite connection with WAL mode and timeout.
+    Sets a busy timeout of 30 seconds and enables WAL journaling.
+    """
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = await aiosqlite.connect(DB_FILE, timeout=30.0)
     conn.row_factory = aiosqlite.Row
     await conn.execute("PRAGMA busy_timeout = 30000;")
+    await conn.execute("PRAGMA journal_mode=WAL;")
     try:
         yield conn
     finally:
@@ -58,6 +89,7 @@ async def init_db() -> None:
                 full_name TEXT,
                 is_subscribed BOOLEAN DEFAULT 0,
                 is_banned BOOLEAN DEFAULT 0,
+                is_admin BOOLEAN DEFAULT 0,
                 referral_count INTEGER DEFAULT 0,
                 referred_by INTEGER,
                 referral_credited BOOLEAN DEFAULT 0,
@@ -235,6 +267,7 @@ async def _migrate_from_json_if_needed() -> None:
 # USER OPERATIONS
 # ==========================================
 
+@retry_on_lock()
 async def upsert_user(
     user: User,
     is_subscribed: bool = False,
@@ -318,6 +351,7 @@ async def get_all_users() -> list[dict[str, Any]]:
         return [dict(r) for r in rows]
 
 
+@retry_on_lock()
 async def set_user_banned(user_id: int, is_banned: bool) -> None:
     async with get_connection() as conn:
         await conn.execute(
@@ -326,7 +360,17 @@ async def set_user_banned(user_id: int, is_banned: bool) -> None:
         )
         await conn.commit()
 
+@retry_on_lock()
+async def set_user_admin(user_id: int, is_admin: bool) -> None:
+    async with get_connection() as conn:
+        await conn.execute(
+            "UPDATE users SET is_admin = ? WHERE user_id = ?;",
+            (1 if is_admin else 0, user_id),
+        )
+        await conn.commit()
 
+
+@retry_on_lock()
 async def credit_referral_if_eligible(user_id: int, is_eligible: bool) -> None:
     """Credit inviter +1 referral count once if the invited user is eligible."""
     if not is_eligible:
@@ -418,7 +462,13 @@ async def get_lesson(lesson_id: str) -> dict[str, Any] | None:
         return dict(row) if row else None
 
 
+@retry_on_lock()
 async def add_lesson(
+    title: str,
+    description: str = "",
+    video_file_id: str | None = None,
+    pdf_file_id: str | None = None,
+) -> str:
     title: str,
     description: str = "",
     video_file_id: str | None = None,
@@ -452,6 +502,7 @@ async def add_lesson(
     return lesson_id
 
 
+@retry_on_lock()
 async def update_lesson(
     lesson_id: str,
     title: str | None = None,
@@ -483,6 +534,7 @@ async def update_lesson(
         await conn.commit()
 
 
+@retry_on_lock()
 async def delete_lesson(lesson_id: str) -> None:
     async with get_connection() as conn:
         await conn.execute("DELETE FROM quizzes WHERE lesson_id = ?;", (lesson_id,))
@@ -505,6 +557,7 @@ async def get_user_progress(user_id: int) -> dict[str, dict[str, Any]]:
         return {r["lesson_id"]: dict(r) for r in rows}
 
 
+@retry_on_lock()
 async def mark_lesson_completed(
     user_id: int, lesson_id: str, quiz_score: int = 0, quiz_passed: bool = True
 ) -> None:
@@ -645,6 +698,7 @@ async def get_required_channels() -> list[dict[str, Any]]:
         return [dict(r) for r in rows]
 
 
+@retry_on_lock()
 async def add_channel(channel_id: str | int, title: str, join_link: str = "") -> None:
     now = _utc_now()
     async with get_connection() as conn:
@@ -658,6 +712,7 @@ async def add_channel(channel_id: str | int, title: str, join_link: str = "") ->
         await conn.commit()
 
 
+@retry_on_lock()
 async def delete_channel(channel_id: str | int) -> None:
     async with get_connection() as conn:
         await conn.execute(
@@ -689,6 +744,7 @@ async def get_setting(key: str, default: str = "") -> str:
         return str(row["value"]) if row else default
 
 
+@retry_on_lock()
 async def set_setting(key: str, value: str) -> None:
     async with get_connection() as conn:
         await conn.execute(

@@ -6,7 +6,7 @@ import logging
 from typing import Any, Iterable
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramAPIError
+from aiogram.exceptions import TelegramAPIError, Forbidden
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,13 @@ async def check_subscription(
             chat_id=_chat_id(channel_id),
             user_id=user_id,
         )
+    except Forbidden as error:
+        logger.warning(
+            "Bot kanal administratori emas (%s): %s — a'zo emas deb hisoblanadi",
+            channel_id,
+            str(error),
+        )
+        return False
     except TelegramAPIError as error:
         logger.warning(
             "Kanal obunasini tekshirishda Telegram xatosi (%s): %s",

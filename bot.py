@@ -9,6 +9,8 @@ import os
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
+from aiogram.exceptions import TelegramAPIError
+import aiohttp
 
 from config import ADMIN_ID, BOT_TOKEN
 from handlers import admin, user
@@ -35,13 +37,24 @@ async def main() -> None:
     if not proxy and ("PYTHONANYWHERE_DOMAIN" in os.environ or "PYTHONANYWHERE_SITE" in os.environ or os.path.exists("/home/abdullajonbot")):
         proxy = "http://proxy.server:3128"
 
-    if proxy:
-        logger.info("Proxy orqali ulanish: %s", proxy)
-        from aiogram.client.session.aiohttp import AiohttpSession
-        session = AiohttpSession(proxy=proxy)
-        bot = Bot(token=BOT_TOKEN, session=session)
-    else:
-        bot = Bot(token=BOT_TOKEN)
+    max_attempts = 5
+    base_delay = 0.5
+    for attempt in range(max_attempts):
+        try:
+            if proxy:
+                if attempt == 0:
+                    logger.info("Proxy orqali ulanish: %s", proxy)
+                from aiogram.client.session.aiohttp import AiohttpSession
+                session = AiohttpSession(proxy=proxy)
+                bot = Bot(token=BOT_TOKEN, session=session)
+            else:
+                bot = Bot(token=BOT_TOKEN)
+            break
+        except (aiohttp.ClientError, TelegramAPIError) as e:
+            logger.warning("Proxy/session ulanishda xatolik (urinish %s): %s", attempt + 1, e)
+            if attempt == max_attempts - 1:
+                raise RuntimeError("Bot sessiyasini yaratib bo'lmadi")
+            await asyncio.sleep(base_delay * (2 ** attempt))
 
     dispatcher = Dispatcher()
 

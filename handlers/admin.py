@@ -90,19 +90,24 @@ class UserSearchState(StatesGroup):
     user_id = State()
 
 
-def _is_admin(user_id: int | None) -> bool:
-    return user_id is not None and ADMIN_ID > 0 and user_id == ADMIN_ID
-
+async def _is_admin(user_id: int | None) -> bool:
+    if user_id is None:
+        return False
+    if ADMIN_ID > 0 and user_id == ADMIN_ID:
+        return True
+    user = await get_user(user_id)
+    if user and user.get("is_admin"):
+        return True
+    return False
 
 async def _check_admin(message: Message) -> bool:
-    if _is_admin(message.from_user.id if message.from_user else None):
+    if await _is_admin(message.from_user.id if message.from_user else None):
         return True
     await message.answer("Bu bo'lim faqat admin uchun.")
     return False
 
-
 async def _check_admin_callback(callback: CallbackQuery) -> bool:
-    if _is_admin(callback.from_user.id if callback.from_user else None):
+    if await _is_admin(callback.from_user.id if callback.from_user else None):
         return True
     await callback.answer("Bu bo'lim faqat admin uchun.", show_alert=True)
     return False
@@ -228,8 +233,35 @@ def _lesson_actions(lesson_id: str) -> InlineKeyboardMarkup:
     )
 
 
-@router.message(Command("admin"))
-async def admin_handler(message: Message, state: FSMContext) -> None:
+from aiogram import Bot
+# Get connection to DB
+from utils.db import get_connection
+
+@router.message(Command(commands=["health"]))
+async def health_cmd(message: Message, bot: Bot):
+    if not await _check_admin(message):
+        return
+    
+    # DB check
+    try:
+        async with get_connection() as conn:
+            await conn.execute("SELECT 1;")
+        db_ok = "✅ DB OK"
+    except Exception as e:
+        db_ok = f"❌ DB error: {e}"
+        
+    # API check
+    try:
+        await bot.get_me()
+        api_ok = "✅ API OK"
+    except Exception as e:
+        api_ok = f"❌ API error: {e}"
+        
+    await message.answer(f"Health check:\n{db_ok}\n{api_ok}")
+
+
+@router.message(Command(commands=["admin"]))
+async def admin_start(message: Message, state: FSMContext) -> None:
     if not await _check_admin(message):
         return
     await state.clear()
@@ -583,12 +615,18 @@ async def user_search_handler(message: Message, state: FSMContext) -> None:
 
     await state.clear()
     is_ban = bool(user.get("is_banned"))
+    is_admin = bool(user.get("is_admin"))
+    
     action_text = "Blokdan chiqarish ✅" if is_ban else "Bloklash 🚫"
     action_callback = f"admin:user:unban:{user_id}" if is_ban else f"admin:user:ban:{user_id}"
+    
+    admin_text = "Admindan olish ❌" if is_admin else "Admin qilish 👑"
+    admin_callback = f"admin:user:removeadmin:{user_id}" if is_admin else f"admin:user:makeadmin:{user_id}"
 
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=action_text, callback_data=action_callback)],
+            [InlineKeyboardButton(text=admin_text, callback_data=admin_callback)],
             [InlineKeyboardButton(text="🔙 Qaytish", callback_data="admin:menu")],
         ]
     )
@@ -620,6 +658,24 @@ async def unban_user_handler(callback: CallbackQuery) -> None:
     user_id = int(callback.data.split(":")[3])
     await set_user_banned(user_id, False)
     await callback.message.edit_text(f"✅ Foydalanuvchi ({user_id}) blokdan chiqarildi.", reply_markup=_back_keyboard())
+
+from utils.db import set_user_admin
+
+@router.callback_query(F.data.startswith("admin:user:makeadmin:"))
+async def makeadmin_user_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    user_id = int(callback.data.split(":")[3])
+    await set_user_admin(user_id, True)
+    await callback.message.edit_text(f"👑 Foydalanuvchi ({user_id}) admin qilindi.", reply_markup=_back_keyboard())
+
+@router.callback_query(F.data.startswith("admin:user:removeadmin:"))
+async def removeadmin_user_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    user_id = int(callback.data.split(":")[3])
+    await set_user_admin(user_id, False)
+    await callback.message.edit_text(f"❌ Foydalanuvchi ({user_id}) dan admin huquqi olindi.", reply_markup=_back_keyboard())
 
 
 # ==========================================
