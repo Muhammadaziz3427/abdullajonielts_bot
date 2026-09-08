@@ -1,1 +1,2 @@
 - [Telegram bot storage](telegram-bot-storage.md) — keep lesson metadata and Telegram file IDs in local JSON; do not add external storage.
+- [Python bot runtime](python-bot-runtime.md) — use the Python tools module before installing aiogram packages in this Replit environment.
