@@ -1,0 +1,1 @@
+- [Telegram bot storage](telegram-bot-storage.md) — keep lesson metadata and Telegram file IDs in local JSON; do not add external storage.

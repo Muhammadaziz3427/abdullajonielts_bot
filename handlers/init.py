@@ -1,0 +1,1 @@
+"""Compatibility marker for the requested handlers/init.py structure."""

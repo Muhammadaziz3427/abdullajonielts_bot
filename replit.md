@@ -1,45 +1,39 @@
-# [Project name]
+# Makhmudov Abdullajon Telegram Bot
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Python va aiogram 3.x asosidagi ta'lim bot: kanalga majburiy obunani tekshiradi,
+dars fayllarini Telegram `file_id` orqali beradi va barcha metama'lumotlarni JSON
+fayllarda saqlaydi.
 
-## Run & Operate
+## Ishga tushirish
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pip install -r requirements.txt` — Python bog'liqliklarini o'rnatish
+- `python bot.py` — botni ishga tushirish
+- Replit Run tugmasi `.replit` dagi `python bot.py` buyrug'idan foydalanadi
 
-## Stack
+## Kerakli sozlamalar
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- `BOT_TOKEN` — BotFather bergan token
+- `ADMIN_ID` — Telegram admin foydalanuvchisining raqamli ID si
+- `CHANNEL_ID` — ixtiyoriy boshlang'ich kanal username yoki ID si
 
-## Where things live
+`BOT_TOKEN` va `ADMIN_ID` ni Replit Secrets/environment variables bo'limida
+saqlash kerak. Majburiy kanal keyinchalik Telegram ichidagi `/admin` paneldan
+ham o'zgartiriladi. Obunani tekshirish uchun bot kanalga admin qilib qo'yilishi
+kerak.
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+## Tuzilma
 
-## Architecture decisions
+- `bot.py` — polling va routerlarni ishga tushiradi
+- `config.py` — token, admin ID va fayl yo'llari
+- `handlers/user.py` — `/start`, `/darslar`, obuna va dars yuborish
+- `handlers/admin.py` — dars, foydalanuvchi va kanal boshqaruvi
+- `utils/file_manager.py` — atomik JSON o'qish/yozish
+- `utils/subscription.py` — Telegram kanal a'zoligini tekshirish
+- `data/` — users, lessons va settings JSON fayllari
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+## Muhim qarorlar
 
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
-
-## Gotchas
-
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Video va PDF fayllar serverga yuklanmaydi: Telegram yuborgan `file_id`
+  `lessons.json` ichida saqlanadi.
+- Foydalanuvchi `/start`, `/darslar` yoki dars tugmasidan foydalanishda obunasi
+  qayta tekshiriladi; obuna bekor qilinsa, darslar yopiladi.
