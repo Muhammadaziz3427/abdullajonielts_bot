@@ -581,7 +581,8 @@ async def profile_handler(message: Message) -> None:
         f"Tugatilgan darslar: <b>{stats['completed_lessons']} / {stats['total_lessons']}</b> ta\n\n"
         f"👥 <b>Referral statistikasi:</b>\n"
         f"Taklif qilgan do'stlaringiz: <b>{ref_count}</b> ta (Talab: {req_invites} ta)\n\n"
-        f"🔗 <b>Sizning taklif havolangiz:</b>\n<code>{link}</code>"
+        f"🔗 <b>Sizning taklif havolangiz:</b>\n<code>{link}</code>\n\n"
+        f"👨‍💻 <i>Dasturchi: @yursinaliev (By Yursinaliev Muhammadaziz)</i>"
     )
 
     await message.answer(
