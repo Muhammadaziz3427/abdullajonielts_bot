@@ -237,8 +237,12 @@ async def start_handler(message: Message) -> None:
         "welcome_text",
         "Assalomu alaykum. «Makhmudov Abdullajon» ta'lim botiga xush kelibsiz!",
     )
+    
+    watermark = "\n\n<i>By <a href='https://t.me/yursinaliev'>Yursinaliev Muhammadaziz</a></i>"
+    
     await message.answer(
-        f"{welcome}\n\nQuyidagi menyu orqali kerakli bo'limni tanlang:",
+        f"{welcome}\n\nQuyidagi menyu orqali kerakli bo'limni tanlang:{watermark}",
+        parse_mode="HTML",
         reply_markup=_main_menu_keyboard(),
     )
 
@@ -640,6 +644,7 @@ async def help_handler(message: Message) -> None:
         "1. <b>📚 Darslar</b> — kurs darslarini ketma-ket tomosha qiling va testlarni yeching.\n"
         "2. <b>👤 Shaxsiy kabinet</b> — o'zlashtirish foizingiz va taklif havolangizni oling.\n"
         "3. <b>🏆 Reyting</b> — eng ko'p do'st chaqirgan yetakchilar ro'yxati.\n"
-        "4. Savol yoki takliflar bo'lsa adminga murojaat qiling.",
+        "4. Savol yoki takliflar bo'lsa adminga murojaat qiling.\n\n"
+        "<i>By <a href='https://t.me/yursinaliev'>Yursinaliev Muhammadaziz</a></i>",
         parse_mode="HTML",
     )
