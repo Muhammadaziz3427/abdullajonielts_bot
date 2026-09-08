@@ -35,10 +35,15 @@ def _utc_now() -> str:
 
 async def get_connection() -> aiosqlite.Connection:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = await aiosqlite.connect(DB_FILE)
+    conn = await aiosqlite.connect(DB_FILE, timeout=30.0)
     conn.row_factory = aiosqlite.Row
-    await conn.execute("PRAGMA journal_mode=WAL;")
+    await conn.execute("PRAGMA busy_timeout = 30000;")
+    try:
+        await conn.execute("PRAGMA journal_mode=WAL;")
+    except Exception:
+        pass
     return conn
+
 
 
 async def init_db() -> None:
