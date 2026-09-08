@@ -135,7 +135,6 @@ async def _subscription_gate(
     )
 
     referral_channel = await get_referral_channel()
-    referral_eligible = False
     if referral_channel:
         ref_sub, _ = await check_required_subscriptions(
             message.bot,
@@ -143,6 +142,8 @@ async def _subscription_gate(
             [referral_channel],
         )
         referral_eligible = ref_sub
+    else:
+        referral_eligible = subscribed
 
     await credit_referral_if_eligible(message.from_user.id, referral_eligible)
 
@@ -262,7 +263,6 @@ async def check_subscription_handler(callback: CallbackQuery) -> None:
     await upsert_user(callback.from_user, is_subscribed=subscribed)
 
     referral_channel = await get_referral_channel()
-    referral_eligible = False
     if referral_channel:
         ref_sub, _ = await check_required_subscriptions(
             callback.bot,
@@ -270,6 +270,8 @@ async def check_subscription_handler(callback: CallbackQuery) -> None:
             [referral_channel],
         )
         referral_eligible = ref_sub
+    else:
+        referral_eligible = subscribed
 
     await credit_referral_if_eligible(callback.from_user.id, referral_eligible)
 
