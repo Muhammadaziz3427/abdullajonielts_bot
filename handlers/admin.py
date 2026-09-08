@@ -24,6 +24,7 @@ from utils.file_manager import (
     count_user_statuses,
     get_required_channels,
     get_required_invites,
+    get_referral_channel,
     get_settings,
     get_user_referral_count,
     is_maintenance_mode,
@@ -149,6 +150,12 @@ def _settings_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(
+                    text="Referral kanalini tanlash",
+                    callback_data="admin:referral_channel",
+                )
+            ],
+            [
+                InlineKeyboardButton(
                     text="Texnik xizmat rejimi", callback_data="admin:maintenance"
                 )
             ],
@@ -266,6 +273,7 @@ async def settings_callback(callback: CallbackQuery) -> None:
         "Obuna va umumiy sozlamalar:\n\n"
         f"Majburiy kanallar: {len(get_required_channels())} ta\n"
         f"Har bir foydalanuvchi taklif qilishi kerak: {get_required_invites()} ta\n"
+        f"Referral kanali: {(get_referral_channel() or {}).get('title', 'tanlanmagan')}\n"
         f"Texnik xizmat: {'yoqilgan' if settings.get('maintenance_mode') else 'o‘chirilgan'}",
         reply_markup=_settings_keyboard(),
     )
@@ -691,6 +699,55 @@ async def invites_start(callback: CallbackQuery, state: FSMContext) -> None:
         f"Har bir foydalanuvchi nechta odam taklif qilishi shart?\n"
         f"Hozirgi qiymat: {get_required_invites()}.\n"
         "0 yuborsangiz, bu talab o'chadi."
+    )
+
+
+@router.callback_query(F.data == "admin:referral_channel")
+async def referral_channel_start(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    channels = get_required_channels()
+    if not channels:
+        await callback.answer("Avval kamida bitta majburiy kanal qo'shing.", show_alert=True)
+        return
+    await callback.answer()
+    await callback.message.answer(
+        "Referral hisobiga tushadigan kanalni tanlang:",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=str(channel.get("title")),
+                        callback_data=f"admin:referral:set:{index}",
+                    )
+                ]
+                for index, channel in enumerate(channels)
+            ]
+            + [[InlineKeyboardButton(text="Orqaga", callback_data="admin:settings")]]
+        ),
+    )
+
+
+@router.callback_query(F.data.startswith("admin:referral:set:"))
+async def referral_channel_set(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    try:
+        index = int((callback.data or "").split(":", maxsplit=3)[3])
+    except ValueError:
+        await callback.answer("Noto'g'ri kanal.", show_alert=True)
+        return
+    channels = get_required_channels()
+    if index < 0 or index >= len(channels):
+        await callback.answer("Kanal topilmadi.", show_alert=True)
+        return
+    settings = get_settings()
+    settings["referral_channel_id"] = channels[index]["channel_id"]
+    save_settings(settings)
+    await callback.answer("Referral kanali saqlandi.")
+    await callback.message.answer(
+        f"Referral kanali: {channels[index].get('title')}",
+        reply_markup=_settings_keyboard(),
     )
 
 

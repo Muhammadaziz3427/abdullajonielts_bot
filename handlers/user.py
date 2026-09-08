@@ -17,8 +17,10 @@ from aiogram.types import (
 
 from config import ADMIN_ID
 from utils.file_manager import (
+    credit_referral_if_eligible,
     get_required_channels,
     get_required_invites,
+    get_referral_channel,
     get_settings,
     get_user_referral_count,
     is_maintenance_mode,
@@ -122,6 +124,19 @@ async def _subscription_gate(
         channels,
     )
     record = upsert_user(message.from_user, subscribed)
+    referral_channel = get_referral_channel()
+    referral_eligible = bool(
+        referral_channel
+        and (
+            await check_required_subscriptions(
+                message.bot,
+                message.from_user.id,
+                [referral_channel],
+            )
+        )[0]
+    )
+    credit_referral_if_eligible(message.from_user.id, referral_eligible)
+    record = load_users().get(str(message.from_user.id), record)
 
     required_invites = get_required_invites()
     referral_count = int(record.get("referral_count", 0))
@@ -219,6 +234,19 @@ async def check_subscription_handler(callback: CallbackQuery) -> None:
         channels,
     )
     record = upsert_user(callback.from_user, subscribed)
+    referral_channel = get_referral_channel()
+    referral_eligible = bool(
+        referral_channel
+        and (
+            await check_required_subscriptions(
+                callback.bot,
+                callback.from_user.id,
+                [referral_channel],
+            )
+        )[0]
+    )
+    credit_referral_if_eligible(callback.from_user.id, referral_eligible)
+    record = load_users().get(str(callback.from_user.id), record)
     if not subscribed:
         await fake_message.answer(
             f"Hali barcha shartlar bajarilmagan. Qolgan kanal(lar): "
@@ -231,7 +259,8 @@ async def check_subscription_handler(callback: CallbackQuery) -> None:
     referral_count = int(record.get("referral_count", 0))
     if referral_count < required_invites:
         await fake_message.answer(
-            f"Obuna tasdiqlandi, lekin yana "
+            f"Obuna tasdiqlandi, lekin belgilangan kanalda referral orqali "
+            f"yana "
             f"{required_invites - referral_count} ta taklif kerak."
         )
         return
@@ -269,6 +298,19 @@ async def lesson_handler(callback: CallbackQuery) -> None:
         channels,
     )
     record = upsert_user(callback.from_user, subscribed)
+    referral_channel = get_referral_channel()
+    referral_eligible = bool(
+        referral_channel
+        and (
+            await check_required_subscriptions(
+                callback.bot,
+                callback.from_user.id,
+                [referral_channel],
+            )
+        )[0]
+    )
+    credit_referral_if_eligible(callback.from_user.id, referral_eligible)
+    record = load_users().get(str(callback.from_user.id), record)
     if not subscribed:
         await callback.message.answer(
             "Darsni olish uchun barcha majburiy kanallarga a'zo bo'ling.",
@@ -277,7 +319,8 @@ async def lesson_handler(callback: CallbackQuery) -> None:
         return
     if int(record.get("referral_count", 0)) < get_required_invites():
         await callback.message.answer(
-            "Darsni olishdan oldin majburiy takliflar sonini bajaring."
+            "Darsni olishdan oldin belgilangan kanalga majburiy referral "
+            "takliflari sonini bajaring."
         )
         return
 

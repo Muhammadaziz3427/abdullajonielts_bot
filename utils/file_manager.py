@@ -86,8 +86,8 @@ def upsert_user(
         and str(referrer_id) in users
     ):
         record["referred_by"] = referrer_id
-        referrer = users[str(referrer_id)]
-        referrer["referral_count"] = int(referrer.get("referral_count", 0)) + 1
+        record["referral_credited"] = False
+    record.setdefault("referral_credited", False)
     users[user_id] = record
     save_users(users)
     return record
@@ -179,6 +179,37 @@ def get_required_invites() -> int:
         return max(0, int(get_settings().get("required_invites", 0)))
     except (TypeError, ValueError):
         return 0
+
+
+def get_referral_channel() -> dict[str, Any] | None:
+    """Return the configured channel whose qualified referrals are counted."""
+    settings = get_settings()
+    referral_channel_id = settings.get("referral_channel_id")
+    channels = get_required_channels()
+    if referral_channel_id not in (None, ""):
+        for channel in channels:
+            if str(channel.get("channel_id")) == str(referral_channel_id):
+                return channel
+    return channels[0] if channels else None
+
+
+def credit_referral_if_eligible(user_id: int, is_eligible: bool) -> None:
+    """Credit an inviter once, only after the invited user passes channel checks."""
+    if not is_eligible:
+        return
+    users = load_users()
+    user = users.get(str(user_id))
+    if not isinstance(user, dict):
+        return
+    referrer_id = user.get("referred_by")
+    if not referrer_id or user.get("referral_credited"):
+        return
+    referrer = users.get(str(referrer_id))
+    if not isinstance(referrer, dict):
+        return
+    referrer["referral_count"] = int(referrer.get("referral_count", 0)) + 1
+    user["referral_credited"] = True
+    save_users(users)
 
 
 def is_maintenance_mode() -> bool:
