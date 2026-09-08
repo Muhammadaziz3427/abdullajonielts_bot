@@ -10,9 +10,10 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, AsyncGenerator
 
 import aiosqlite
 from aiogram.types import User
@@ -33,23 +34,22 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-async def get_connection() -> aiosqlite.Connection:
+@asynccontextmanager
+async def get_connection() -> AsyncGenerator[aiosqlite.Connection, None]:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = await aiosqlite.connect(DB_FILE, timeout=30.0)
     conn.row_factory = aiosqlite.Row
     await conn.execute("PRAGMA busy_timeout = 30000;")
     try:
-        await conn.execute("PRAGMA journal_mode=WAL;")
-    except Exception:
-        pass
-    return conn
-
+        yield conn
+    finally:
+        await conn.close()
 
 
 async def init_db() -> None:
     """Initialize database tables and run migrations from JSON if needed."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.executescript(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -122,7 +122,7 @@ async def init_db() -> None:
 
 async def _migrate_from_json_if_needed() -> None:
     """Safely migrate legacy JSON data into SQLite tables if empty."""
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         # 1. Migrate settings
         cursor = await conn.execute("SELECT COUNT(*) as cnt FROM settings;")
         row = await cursor.fetchone()
@@ -242,7 +242,7 @@ async def upsert_user(
 ) -> dict[str, Any]:
     """Insert or update user information and handle initial referral linking."""
     now = _utc_now()
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM users WHERE user_id = ?;", (user.id,)
         )
@@ -301,7 +301,7 @@ async def upsert_user(
 
 
 async def get_user(user_id: int) -> dict[str, Any] | None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM users WHERE user_id = ?;", (user_id,)
         )
@@ -310,7 +310,7 @@ async def get_user(user_id: int) -> dict[str, Any] | None:
 
 
 async def get_all_users() -> list[dict[str, Any]]:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM users ORDER BY created_at DESC;"
         )
@@ -319,7 +319,7 @@ async def get_all_users() -> list[dict[str, Any]]:
 
 
 async def set_user_banned(user_id: int, is_banned: bool) -> None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute(
             "UPDATE users SET is_banned = ? WHERE user_id = ?;",
             (1 if is_banned else 0, user_id),
@@ -331,7 +331,7 @@ async def credit_referral_if_eligible(user_id: int, is_eligible: bool) -> None:
     """Credit inviter +1 referral count once if the invited user is eligible."""
     if not is_eligible:
         return
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT referred_by, referral_credited FROM users WHERE user_id = ?;",
             (user_id,),
@@ -360,7 +360,7 @@ async def credit_referral_if_eligible(user_id: int, is_eligible: bool) -> None:
 
 async def get_leaderboard(limit: int = 10) -> list[dict[str, Any]]:
     """Return top users ranked by referral count."""
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             """
             SELECT user_id, username, full_name, referral_count
@@ -377,7 +377,7 @@ async def get_leaderboard(limit: int = 10) -> list[dict[str, Any]]:
 
 async def count_user_statuses() -> tuple[int, int, int]:
     """Return total users, active subscribed users, and banned users."""
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute("SELECT COUNT(*) as total FROM users;")
         total = (await cursor.fetchone())["total"]
 
@@ -399,7 +399,7 @@ async def count_user_statuses() -> tuple[int, int, int]:
 # ==========================================
 
 async def get_lessons(active_only: bool = True) -> list[dict[str, Any]]:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         query = "SELECT * FROM lessons"
         if active_only:
             query += " WHERE is_active = 1"
@@ -410,7 +410,7 @@ async def get_lessons(active_only: bool = True) -> list[dict[str, Any]]:
 
 
 async def get_lesson(lesson_id: str) -> dict[str, Any] | None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM lessons WHERE id = ?;", (lesson_id,)
         )
@@ -426,7 +426,7 @@ async def add_lesson(
 ) -> str:
     lesson_id = uuid.uuid4().hex[:12]
     now = _utc_now()
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT COALESCE(MAX(order_num), 0) + 1 as next_order FROM lessons;"
         )
@@ -459,7 +459,7 @@ async def update_lesson(
     video_file_id: str | None = None,
     pdf_file_id: str | None = None,
 ) -> None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM lessons WHERE id = ?;", (lesson_id,)
         )
@@ -484,7 +484,7 @@ async def update_lesson(
 
 
 async def delete_lesson(lesson_id: str) -> None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute("DELETE FROM quizzes WHERE lesson_id = ?;", (lesson_id,))
         await conn.execute("DELETE FROM user_progress WHERE lesson_id = ?;", (lesson_id,))
         await conn.execute("DELETE FROM lessons WHERE id = ?;", (lesson_id,))
@@ -497,7 +497,7 @@ async def delete_lesson(lesson_id: str) -> None:
 
 async def get_user_progress(user_id: int) -> dict[str, dict[str, Any]]:
     """Return dictionary mapping lesson_id -> progress record."""
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM user_progress WHERE user_id = ?;", (user_id,)
         )
@@ -509,7 +509,7 @@ async def mark_lesson_completed(
     user_id: int, lesson_id: str, quiz_score: int = 0, quiz_passed: bool = True
 ) -> None:
     now = _utc_now()
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute(
             """
             INSERT INTO user_progress (user_id, lesson_id, is_completed, quiz_score, quiz_passed, completed_at)
@@ -538,7 +538,7 @@ async def is_lesson_unlocked(user_id: int, lesson_id: str) -> bool:
         return True  # First lesson or not found is open
 
     prev_lesson = lessons[target_idx - 1]
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             """
             SELECT is_completed FROM user_progress
@@ -555,7 +555,7 @@ async def get_user_stats(user_id: int) -> dict[str, Any]:
     lessons = await get_lessons(active_only=True)
     total_lessons = len(lessons)
 
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             """
             SELECT COUNT(*) as completed_count
@@ -579,7 +579,7 @@ async def get_user_stats(user_id: int) -> dict[str, Any]:
 # ==========================================
 
 async def get_quizzes_for_lesson(lesson_id: str) -> list[dict[str, Any]]:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM quizzes WHERE lesson_id = ? ORDER BY created_at ASC;",
             (lesson_id,),
@@ -605,7 +605,7 @@ async def add_quiz(
 ) -> str:
     quiz_id = uuid.uuid4().hex[:12]
     now = _utc_now()
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute(
             """
             INSERT INTO quizzes (
@@ -627,7 +627,7 @@ async def add_quiz(
 
 
 async def delete_quizzes_for_lesson(lesson_id: str) -> None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute("DELETE FROM quizzes WHERE lesson_id = ?;", (lesson_id,))
         await conn.commit()
 
@@ -637,7 +637,7 @@ async def delete_quizzes_for_lesson(lesson_id: str) -> None:
 # ==========================================
 
 async def get_required_channels() -> list[dict[str, Any]]:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT * FROM channels WHERE is_active = 1 ORDER BY created_at ASC;"
         )
@@ -647,7 +647,7 @@ async def get_required_channels() -> list[dict[str, Any]]:
 
 async def add_channel(channel_id: str | int, title: str, join_link: str = "") -> None:
     now = _utc_now()
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute(
             """
             INSERT OR REPLACE INTO channels (channel_id, title, join_link, is_active, created_at)
@@ -659,7 +659,7 @@ async def add_channel(channel_id: str | int, title: str, join_link: str = "") ->
 
 
 async def delete_channel(channel_id: str | int) -> None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute(
             "DELETE FROM channels WHERE channel_id = ?;", (str(channel_id),)
         )
@@ -681,7 +681,7 @@ async def get_referral_channel() -> dict[str, Any] | None:
 # ==========================================
 
 async def get_setting(key: str, default: str = "") -> str:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         cursor = await conn.execute(
             "SELECT value FROM settings WHERE key = ?;", (key,)
         )
@@ -690,7 +690,7 @@ async def get_setting(key: str, default: str = "") -> str:
 
 
 async def set_setting(key: str, value: str) -> None:
-    async with await get_connection() as conn:
+    async with get_connection() as conn:
         await conn.execute(
             "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?);",
             (key, str(value)),
