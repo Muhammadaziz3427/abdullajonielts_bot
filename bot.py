@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
@@ -29,7 +30,19 @@ async def main() -> None:
     await init_db()
     logger.info("Ma'lumotlar bazasi (SQLite) tayyorlandi.")
 
-    bot = Bot(token=BOT_TOKEN)
+    proxy = os.getenv("PROXY_URL")
+    # Auto-detect PythonAnywhere environment
+    if not proxy and ("PYTHONANYWHERE_DOMAIN" in os.environ or "PYTHONANYWHERE_SITE" in os.environ or os.path.exists("/home/abdullajonbot")):
+        proxy = "http://proxy.server:3128"
+
+    if proxy:
+        logger.info("Proxy orqali ulanish: %s", proxy)
+        from aiogram.client.session.aiohttp import AiohttpSession
+        session = AiohttpSession(proxy=proxy)
+        bot = Bot(token=BOT_TOKEN, session=session)
+    else:
+        bot = Bot(token=BOT_TOKEN)
+
     dispatcher = Dispatcher()
 
     # Register anti-spam throttling middleware
@@ -42,16 +55,19 @@ async def main() -> None:
     dispatcher.include_router(user.router)
 
     # Set bot commands in menu
-    await bot.set_my_commands(
-        [
-            BotCommand(command="start", description="Botni ishga tushirish"),
-            BotCommand(command="darslar", description="Kurs darslari"),
-            BotCommand(command="profil", description="Shaxsiy kabinet"),
-            BotCommand(command="reyting", description="Foydalanuvchilar reytingi"),
-            BotCommand(command="admin", description="Admin boshqaruv paneli"),
-            BotCommand(command="cancel", description="Joriy amalni bekor qilish"),
-        ]
-    )
+    try:
+        await bot.set_my_commands(
+            [
+                BotCommand(command="start", description="Botni ishga tushirish"),
+                BotCommand(command="darslar", description="Kurs darslari"),
+                BotCommand(command="profil", description="Shaxsiy kabinet"),
+                BotCommand(command="reyting", description="Foydalanuvchilar reytingi"),
+                BotCommand(command="admin", description="Admin boshqaruv paneli"),
+                BotCommand(command="cancel", description="Joriy amalni bekor qilish"),
+            ]
+        )
+    except Exception as e:
+        logger.warning("Bot buyruqlarini sozlashda xatolik: %s", e)
 
     logger.info("Makhmudov Abdullajon bot ishga tushdi")
     try:
