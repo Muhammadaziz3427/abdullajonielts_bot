@@ -131,7 +131,7 @@ def _admin_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(
-                    text="👥 Foydalanuvchilar", callback_data="admin:users"
+                    text="👥 Foydalanuvchilar (Admin/Ban)", callback_data="admin:users"
                 ),
                 InlineKeyboardButton(
                     text="📥 Excel yuklab olish", callback_data="admin:excel"
@@ -591,7 +591,8 @@ async def admin_users_menu(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.message.edit_text(
         f"👥 <b>Foydalanuvchilar bo'limi:</b>\n\n"
         f"Jami: {total} ta | Obunachi: {subscribed} ta | Bloklangan: {banned} ta\n\n"
-        f"Foydalanuvchini boshqarish (bloklash/ochish) uchun uning <b>Telegram ID</b> sini yuboring:",
+        f"Foydalanuvchini boshqarish (<b>Admin qilish/olish</b> yoki <b>Bloklash/ochish</b>) uchun uning <b>Telegram ID</b> sini yuboring:\n\n"
+        f"<i>Masalan: 123456789</i>",
         parse_mode="HTML",
         reply_markup=_back_keyboard(),
     )
@@ -769,6 +770,43 @@ async def channel_delete_handler(callback: CallbackQuery) -> None:
     channel_id = callback.data.split(":", maxsplit=3)[3]
     await delete_channel(channel_id)
     await callback.message.edit_text("🗑 Kanal o'chirildi.", reply_markup=_settings_keyboard())
+
+
+@router.callback_query(F.data == "admin:channel:check")
+async def channel_check_handler(callback: CallbackQuery, bot: Bot) -> None:
+    if not await _check_admin_callback(callback):
+        return
+
+    channels = await get_required_channels()
+    if not channels:
+        await callback.message.edit_text(
+            "📋 Majburiy kanallar ro'yxati bo'sh.",
+            reply_markup=_settings_keyboard(),
+        )
+        return
+
+    bot_info = await bot.get_me()
+    results = []
+    for ch in channels:
+        ch_id = ch.get("channel_id")
+        title = ch.get("title", str(ch_id))
+        try:
+            from utils.subscription import _chat_id
+            member = await bot.get_chat_member(chat_id=_chat_id(ch_id), user_id=bot_info.id)
+            if member.status in ("administrator", "creator"):
+                results.append(f"✅ <b>{title}</b> (<code>{ch_id}</code>):\nBot kanalda <b>ADMIN</b>!")
+            else:
+                results.append(f"⚠️ <b>{title}</b> (<code>{ch_id}</code>):\nBot a'zo, lekin <b>ADMIN EMAS</b> (status: {member.status})")
+        except TelegramForbiddenError:
+            results.append(f"❌ <b>{title}</b> (<code>{ch_id}</code>):\nBot kanalda mavjud emas yoki huquqi yo'q (Forbidden)!")
+        except Exception as e:
+            results.append(f"❓ <b>{title}</b> (<code>{ch_id}</code>):\nXatolik: {e}")
+
+    await callback.message.edit_text(
+        "🔍 <b>Kanallar huquqini tekshirish natijasi:</b>\n\n" + "\n\n".join(results),
+        parse_mode="HTML",
+        reply_markup=_settings_keyboard(),
+    )
 
 
 @router.callback_query(F.data == "admin:channel:add")
