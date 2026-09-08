@@ -1,3 +1,15 @@
 {
-  "channel_id": "@+QysnM1PghXk5Nzhi"
+  "channel_id": -1002090565729,
+  "required_channels": [
+    {
+      "channel_id": -1002090565729,
+      "title": "Makhmudov Abdullajon| IELTS 8.5",
+      "join_link": "https://t.me/+QysnM1PghXk5Nzhi"
+    }
+  ],
+  "required_invites": 1,
+  "maintenance_mode": false,
+  "welcome_text": "Assalomu alaykum. «Makhmudov Abdullajon» botiga xush kelibsiz.",
+  "subscription_text": "Botdan foydalanish uchun avval majburiy kanal(lar)ga a'zo bo'ling.",
+  "referral_channel_id": -1002090565729
 }

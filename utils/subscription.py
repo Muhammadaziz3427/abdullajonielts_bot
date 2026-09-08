@@ -42,7 +42,9 @@ async def check_subscription(
         )
     except TelegramAPIError as error:
         logger.warning(
-            "Kanal obunasini tekshirishda Telegram xatosi: %s", error.__class__.__name__
+            "Kanal obunasini tekshirishda Telegram xatosi (%s): %s",
+            error.__class__.__name__,
+            str(error),
         )
         return False
 

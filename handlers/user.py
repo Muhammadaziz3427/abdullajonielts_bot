@@ -1,4 +1,4 @@
-"""User-facing Telegram handlers."""
+"""User-facing Telegram handlers with rich LMS features, quizzes, and personal cabinet."""
 
 from __future__ import annotations
 
@@ -12,20 +12,28 @@ from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    KeyboardButton,
     Message,
+    ReplyKeyboardMarkup,
 )
 
 from config import ADMIN_ID
-from utils.file_manager import (
+from utils.db import (
     credit_referral_if_eligible,
+    get_leaderboard,
+    get_lesson,
+    get_lessons,
+    get_quizzes_for_lesson,
+    get_referral_channel,
     get_required_channels,
     get_required_invites,
-    get_referral_channel,
-    get_settings,
-    get_user_referral_count,
+    get_setting,
+    get_user,
+    get_user_progress,
+    get_user_stats,
+    is_lesson_unlocked,
     is_maintenance_mode,
-    load_lessons,
-    load_users,
+    mark_lesson_completed,
     upsert_user,
 )
 from utils.subscription import (
@@ -33,15 +41,25 @@ from utils.subscription import (
     join_link_for_channel,
 )
 
-
 router = Router(name="user")
 logger = logging.getLogger(__name__)
 
 
+def _main_menu_keyboard() -> ReplyKeyboardMarkup:
+    """Persistent user bottom keyboard."""
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="📚 Darslar"), KeyboardButton(text="👤 Shaxsiy kabinet")],
+            [KeyboardButton(text="🏆 Reyting"), KeyboardButton(text="📢 Kanalimiz")],
+            [KeyboardButton(text="ℹ️ Yordam")],
+        ],
+        resize_keyboard=True,
+    )
+
+
 def _subscription_keyboard(
-    channels: list[dict[str, Any]] | None = None,
+    channels: list[dict[str, Any]],
 ) -> InlineKeyboardMarkup:
-    channels = channels if channels is not None else get_required_channels()
     rows = [
         [
             InlineKeyboardButton(
@@ -55,7 +73,7 @@ def _subscription_keyboard(
     rows.append(
         [
             InlineKeyboardButton(
-                text="Obunani tekshirish",
+                text="🔄 Obunani tekshirish",
                 callback_data="check_subscription",
             )
         ]
@@ -81,76 +99,64 @@ async def _referral_link(message: Message) -> str:
     return f"https://t.me/{bot_user.username}?start=ref_{message.from_user.id}"
 
 
-async def _blocked_message(message: Message, reason: str) -> None:
-    await message.answer(reason)
-
-
 async def _subscription_gate(
     message: Message, referrer_id: int | None = None
 ) -> bool:
-    """Record the user and prevent protected content until every rule passes."""
+    """Record user and enforce channels subscription and invite quotas."""
     if message.from_user is None:
         return False
 
-    existing = load_users().get(str(message.from_user.id), {})
-    if existing.get("is_banned"):
-        await _blocked_message(message, "Sizning botdan foydalanishingiz bloklangan.")
+    existing = await get_user(message.from_user.id)
+    if existing and existing.get("is_banned"):
+        await message.answer("Sizning botdan foydalanishingiz bloklangan.")
         return False
 
-    record = upsert_user(
-        message.from_user,
-        is_subscribed=False,
-        referrer_id=referrer_id,
-    )
-
-    if is_maintenance_mode() and message.from_user.id != ADMIN_ID:
-        await _blocked_message(
-            message,
-            "Bot vaqtincha texnik xizmatda. Iltimos, keyinroq qayta urinib ko'ring.",
+    if await is_maintenance_mode() and message.from_user.id != ADMIN_ID:
+        await message.answer(
+            "Bot vaqtincha texnik xizmatda. Iltimos, keyinroq qayta urinib ko'ring."
         )
         return False
 
-    channels = get_required_channels()
+    channels = await get_required_channels()
     if not channels:
-        await _blocked_message(
-            message,
-            "Majburiy kanal hali sozlanmagan. Iltimos, keyinroq qayta urinib ko'ring.",
-        )
-        return False
+        await upsert_user(message.from_user, is_subscribed=True, referrer_id=referrer_id)
+        return True
 
     subscribed, missing_channels = await check_required_subscriptions(
         message.bot,
         message.from_user.id,
         channels,
     )
-    record = upsert_user(message.from_user, subscribed)
-    referral_channel = get_referral_channel()
-    referral_eligible = bool(
-        referral_channel
-        and (
-            await check_required_subscriptions(
-                message.bot,
-                message.from_user.id,
-                [referral_channel],
-            )
-        )[0]
-    )
-    credit_referral_if_eligible(message.from_user.id, referral_eligible)
-    record = load_users().get(str(message.from_user.id), record)
 
-    required_invites = get_required_invites()
-    referral_count = int(record.get("referral_count", 0))
+    await upsert_user(
+        message.from_user,
+        is_subscribed=subscribed,
+        referrer_id=referrer_id,
+    )
+
+    referral_channel = await get_referral_channel()
+    referral_eligible = False
+    if referral_channel:
+        ref_sub, _ = await check_required_subscriptions(
+            message.bot,
+            message.from_user.id,
+            [referral_channel],
+        )
+        referral_eligible = ref_sub
+
+    await credit_referral_if_eligible(message.from_user.id, referral_eligible)
+
+    user_record = await get_user(message.from_user.id)
+    referral_count = int(user_record.get("referral_count", 0)) if user_record else 0
+    required_invites = await get_required_invites()
+
     if not subscribed:
-        settings = get_settings()
-        prompt = str(
-            settings.get(
-                "subscription_text",
-                "Botdan foydalanish uchun avval majburiy kanal(lar)ga a'zo bo'ling.",
-            )
+        sub_text = await get_setting(
+            "subscription_text",
+            "Botdan foydalanish uchun avval majburiy kanal(lar)ga a'zo bo'ling.",
         )
         await message.answer(
-            f"{prompt}\n"
-            f"Qolgan kanal(lar): {len(missing_channels)} ta.",
+            f"{sub_text}\n\nQolgan kanal(lar): {len(missing_channels)} ta.",
             reply_markup=_subscription_keyboard(missing_channels),
         )
         return False
@@ -159,7 +165,7 @@ async def _subscription_gate(
         link = await _referral_link(message)
         share_url = (
             "https://t.me/share/url?url="
-            f"{quote_plus(link)}&text={quote_plus('Botga qo‘shiling!')}"
+            f"{quote_plus(link)}&text={quote_plus('Darslarni bepul o‘rganish uchun botga qo‘shiling!')}"
             if link
             else ""
         )
@@ -168,7 +174,7 @@ async def _subscription_gate(
             rows.append(
                 [
                     InlineKeyboardButton(
-                        text="Do'stlarni taklif qilish",
+                        text="👥 Do'stlarni taklif qilish",
                         url=share_url,
                     )
                 ]
@@ -176,47 +182,64 @@ async def _subscription_gate(
         rows.append(
             [
                 InlineKeyboardButton(
-                    text="Holatni tekshirish",
+                    text="🔄 Holatni tekshirish",
                     callback_data="check_subscription",
                 )
             ]
         )
         await message.answer(
-            f"Botdan foydalanish uchun yana "
-            f"{required_invites - referral_count} ta foydalanuvchini taklif qiling.\n"
-            f"Siz taklif qilganlar: {referral_count}/{required_invites}",
+            f"Botdan foydalanish uchun yana <b>{required_invites - referral_count} ta</b> do'stingizni taklif qiling.\n\n"
+            f"Siz taklif qilganlar: <b>{referral_count} / {required_invites}</b> ta\n"
+            f"Sizning taklif havolangiz:\n<code>{link}</code>",
+            parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=rows),
         )
         return False
+
     return True
 
 
-def _lessons_keyboard(lessons: list[dict[str, Any]]) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
+async def _build_lessons_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    lessons = await get_lessons(active_only=True)
+    progress_map = await get_user_progress(user_id)
+
+    keyboard: list[list[InlineKeyboardButton]] = []
+    for idx, lesson in enumerate(lessons, 1):
+        lesson_id = lesson["id"]
+        is_completed = bool(progress_map.get(lesson_id, {}).get("is_completed"))
+        is_unlocked = await is_lesson_unlocked(user_id, lesson_id)
+
+        if is_completed:
+            status_icon = "✅"
+        elif is_unlocked:
+            status_icon = "▶️"
+        else:
+            status_icon = "🔒"
+
+        btn_text = f"{status_icon} {idx}-dars: {lesson['title']}"
+        keyboard.append(
             [
                 InlineKeyboardButton(
-                    text=str(lesson.get("title", "Nomsiz dars")),
-                    callback_data=f"lesson:{lesson['id']}",
+                    text=btn_text,
+                    callback_data=f"lesson:view:{lesson_id}",
                 )
             ]
-            for lesson in lessons
-        ]
-    )
+        )
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 @router.message(CommandStart())
 async def start_handler(message: Message) -> None:
     if not await _subscription_gate(message, _referral_payload(message)):
         return
-    welcome = str(
-        get_settings().get(
-            "welcome_text",
-            "Assalomu alaykum. «Makhmudov Abdullajon» botiga xush kelibsiz.",
-        )
+
+    welcome = await get_setting(
+        "welcome_text",
+        "Assalomu alaykum. «Makhmudov Abdullajon» ta'lim botiga xush kelibsiz!",
     )
     await message.answer(
-        f"{welcome}\n\nDarslar ro'yxati uchun /darslar buyrug'ini yuboring."
+        f"{welcome}\n\nQuyidagi menyu orqali kerakli bo'limni tanlang:",
+        reply_markup=_main_menu_keyboard(),
     )
 
 
@@ -226,119 +249,397 @@ async def check_subscription_handler(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
 
-    fake_message = callback.message
-    channels = get_required_channels()
+    channels = await get_required_channels()
     subscribed, missing_channels = await check_required_subscriptions(
         callback.bot,
         callback.from_user.id,
         channels,
     )
-    record = upsert_user(callback.from_user, subscribed)
-    referral_channel = get_referral_channel()
-    referral_eligible = bool(
-        referral_channel
-        and (
-            await check_required_subscriptions(
-                callback.bot,
-                callback.from_user.id,
-                [referral_channel],
-            )
-        )[0]
-    )
-    credit_referral_if_eligible(callback.from_user.id, referral_eligible)
-    record = load_users().get(str(callback.from_user.id), record)
+    await upsert_user(callback.from_user, is_subscribed=subscribed)
+
+    referral_channel = await get_referral_channel()
+    referral_eligible = False
+    if referral_channel:
+        ref_sub, _ = await check_required_subscriptions(
+            callback.bot,
+            callback.from_user.id,
+            [referral_channel],
+        )
+        referral_eligible = ref_sub
+
+    await credit_referral_if_eligible(callback.from_user.id, referral_eligible)
+
+    user_record = await get_user(callback.from_user.id)
+    referral_count = int(user_record.get("referral_count", 0)) if user_record else 0
+    required_invites = await get_required_invites()
+
     if not subscribed:
-        await fake_message.answer(
-            f"Hali barcha shartlar bajarilmagan. Qolgan kanal(lar): "
-            f"{len(missing_channels)} ta.",
+        await callback.message.answer(
+            f"❌ Hali barcha shartlar bajarilmagan. Qolgan kanal(lar): {len(missing_channels)} ta.",
             reply_markup=_subscription_keyboard(missing_channels),
         )
         return
 
-    required_invites = get_required_invites()
-    referral_count = int(record.get("referral_count", 0))
     if referral_count < required_invites:
-        await fake_message.answer(
-            f"Obuna tasdiqlandi, lekin belgilangan kanalda referral orqali "
-            f"yana "
-            f"{required_invites - referral_count} ta taklif kerak."
+        await callback.message.answer(
+            f"✅ Obuna tasdiqlandi!\nLekin botdan to'liq foydalanish uchun yana "
+            f"<b>{required_invites - referral_count} ta</b> do'stingizni taklif qilishingiz kerak.",
+            parse_mode="HTML",
         )
         return
-    await fake_message.answer(
-        "Barcha shartlar tasdiqlandi. Endi /darslar buyrug'ini yuboring."
+
+    await callback.message.answer(
+        "🎉 Barcha shartlar muvaffaqiyatli bajarildi! Darslarni boshlash uchun <b>📚 Darslar</b> tugmasini bosing.",
+        parse_mode="HTML",
+        reply_markup=_main_menu_keyboard(),
     )
 
 
 @router.message(Command("darslar"))
+@router.message(F.text == "📚 Darslar")
 async def lessons_handler(message: Message) -> None:
     if not await _subscription_gate(message):
         return
 
-    lessons = load_lessons()
+    lessons = await get_lessons(active_only=True)
     if not lessons:
-        await message.answer("Hozircha darslar qo'shilmagan.")
+        await message.answer("Hozircha darslar yuklanmagan. Tez orada yangi darslar qo'shiladi!")
         return
 
+    kb = await _build_lessons_keyboard(message.from_user.id)
     await message.answer(
-        "Kerakli darsni tanlang:",
-        reply_markup=_lessons_keyboard(lessons),
+        "📚 <b>Kurs darslari ro'yxati:</b>\n\n"
+        "✅ — Tugatilgan darslar\n"
+        "▶️ — O'rganish uchun ochiq dars\n"
+        "🔒 — Keyingi dars (oldingi darsni tugatgach ochiladi)\n\n"
+        "O'rganmoqchi bo'lgan darsingizni tanlang:",
+        parse_mode="HTML",
+        reply_markup=kb,
     )
 
 
-@router.callback_query(F.data.startswith("lesson:"))
-async def lesson_handler(callback: CallbackQuery) -> None:
+@router.callback_query(F.data.startswith("lesson:view:"))
+async def lesson_view_handler(callback: CallbackQuery) -> None:
     await callback.answer()
     if callback.message is None or callback.from_user is None or callback.data is None:
         return
 
-    channels = get_required_channels()
-    subscribed, missing_channels = await check_required_subscriptions(
-        callback.bot,
-        callback.from_user.id,
-        channels,
-    )
-    record = upsert_user(callback.from_user, subscribed)
-    referral_channel = get_referral_channel()
-    referral_eligible = bool(
-        referral_channel
-        and (
-            await check_required_subscriptions(
-                callback.bot,
-                callback.from_user.id,
-                [referral_channel],
-            )
-        )[0]
-    )
-    credit_referral_if_eligible(callback.from_user.id, referral_eligible)
-    record = load_users().get(str(callback.from_user.id), record)
-    if not subscribed:
-        await callback.message.answer(
-            "Darsni olish uchun barcha majburiy kanallarga a'zo bo'ling.",
-            reply_markup=_subscription_keyboard(missing_channels),
-        )
-        return
-    if int(record.get("referral_count", 0)) < get_required_invites():
-        await callback.message.answer(
-            "Darsni olishdan oldin belgilangan kanalga majburiy referral "
-            "takliflari sonini bajaring."
-        )
-        return
-
-    lesson_id = callback.data.split(":", maxsplit=1)[1]
-    lesson = next((item for item in load_lessons() if item.get("id") == lesson_id), None)
-    if lesson is None:
+    lesson_id = callback.data.split(":", maxsplit=2)[2]
+    lesson = await get_lesson(lesson_id)
+    if not lesson or not lesson.get("is_active"):
         await callback.message.answer("Bu dars topilmadi yoki o'chirilgan.")
         return
 
+    # Check lock
+    is_unlocked = await is_lesson_unlocked(callback.from_user.id, lesson_id)
+    if not is_unlocked:
+        await callback.message.answer(
+            "🔒 <b>Bu dars hozircha qulflangan!</b>\n\n"
+            "Ketma-ketlik qoidasiga ko'ra, bu darsni ochish uchun avval oldingi darslarni ko'rib chiqishingiz yoki testini topshirishingiz kerak.",
+            parse_mode="HTML",
+        )
+        return
+
+    quizzes = await get_quizzes_for_lesson(lesson_id)
+    progress_map = await get_user_progress(callback.from_user.id)
+    is_completed = bool(progress_map.get(lesson_id, {}).get("is_completed"))
+
+    # Action buttons below lesson
+    action_buttons = []
+    if quizzes:
+        action_buttons.append(
+            [
+                InlineKeyboardButton(
+                    text="📝 Testni topshirish",
+                    callback_data=f"quiz:start:{lesson_id}:0:0",
+                )
+            ]
+        )
+    else:
+        if not is_completed:
+            action_buttons.append(
+                [
+                    InlineKeyboardButton(
+                        text="✅ Darsni yakunlash",
+                        callback_data=f"lesson:complete:{lesson_id}",
+                    )
+                ]
+            )
+
+    action_buttons.append(
+        [
+            InlineKeyboardButton(
+                text="🔙 Darslar ro'yxatiga qaytish",
+                callback_data="lesson:list",
+            )
+        ]
+    )
+    kb = InlineKeyboardMarkup(inline_keyboard=action_buttons)
+
     title = str(lesson.get("title", "Dars"))
     description = str(lesson.get("description", "")).strip()
-    caption = f"{title}\n\n{description}".strip()[:1024]
+    caption = f"📖 <b>{title}</b>\n\n{description}".strip()[:1024]
+
     video_file_id = lesson.get("video_file_id")
     pdf_file_id = lesson.get("pdf_file_id")
+
     if video_file_id:
-        await callback.message.answer_video(video=video_file_id, caption=caption)
-    if pdf_file_id:
-        await callback.message.answer_document(document=pdf_file_id, caption=caption)
-    if not video_file_id and not pdf_file_id:
-        logger.error("Fayl ID si yo'q dars tanlandi: %s", lesson_id)
-        await callback.message.answer("Bu dars uchun fayl mavjud emas.")
+        await callback.message.answer_video(
+            video=video_file_id,
+            caption=caption,
+            parse_mode="HTML",
+            reply_markup=kb,
+        )
+    elif pdf_file_id:
+        await callback.message.answer_document(
+            document=pdf_file_id,
+            caption=caption,
+            parse_mode="HTML",
+            reply_markup=kb,
+        )
+    else:
+        await callback.message.answer(
+            caption or "Dars ma'lumotlari yuklanmoqda...",
+            parse_mode="HTML",
+            reply_markup=kb,
+        )
+
+
+@router.callback_query(F.data == "lesson:list")
+async def lesson_list_callback(callback: CallbackQuery) -> None:
+    await callback.answer()
+    if callback.message and callback.from_user:
+        kb = await _build_lessons_keyboard(callback.from_user.id)
+        await callback.message.answer(
+            "📚 <b>Kurs darslari:</b>",
+            parse_mode="HTML",
+            reply_markup=kb,
+        )
+
+
+@router.callback_query(F.data.startswith("lesson:complete:"))
+async def lesson_complete_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
+    if callback.message is None or callback.from_user is None or callback.data is None:
+        return
+
+    lesson_id = callback.data.split(":", maxsplit=2)[2]
+    await mark_lesson_completed(callback.from_user.id, lesson_id, quiz_score=100, quiz_passed=True)
+
+    kb = await _build_lessons_keyboard(callback.from_user.id)
+    await callback.message.answer(
+        "🎉 <b>Tabriklaymiz! Dars muvaffaqiyatli yakunlandi.</b>\n\n"
+        "Keyingi dars ochildi!",
+        parse_mode="HTML",
+        reply_markup=kb,
+    )
+
+
+# ==========================================
+# QUIZ HANDLERS
+# ==========================================
+
+@router.callback_query(F.data.startswith("quiz:start:"))
+async def quiz_start_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
+    if callback.message is None or callback.from_user is None or callback.data is None:
+        return
+
+    parts = callback.data.split(":")
+    lesson_id = parts[2]
+    q_index = int(parts[3])
+    score = int(parts[4])
+
+    quizzes = await get_quizzes_for_lesson(lesson_id)
+    if not quizzes or q_index >= len(quizzes):
+        # Completed all questions
+        total_q = len(quizzes)
+        passed = score >= (total_q * 0.6) if total_q > 0 else True
+        await mark_lesson_completed(
+            callback.from_user.id, lesson_id, quiz_score=int(score / max(total_q, 1) * 100), quiz_passed=passed
+        )
+
+        status_text = "🎉 <b>Testdan muvaffaqiyatli o'tdingiz!</b>" if passed else "⚠️ <b>Test natijasi pastroq, lekin dars o'rganildi deb belgilandi.</b>"
+        await callback.message.answer(
+            f"{status_text}\n\n"
+            f"To'g'ri javoblar: <b>{score} / {total_q}</b> ta\n"
+            f"Keyingi dars o'rganish uchun ochildi!",
+            parse_mode="HTML",
+            reply_markup=await _build_lessons_keyboard(callback.from_user.id),
+        )
+        return
+
+    quiz = quizzes[q_index]
+    options = quiz.get("options", [])
+
+    kb_rows = []
+    for opt_idx, opt_text in enumerate(options):
+        kb_rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"{chr(65 + opt_idx)}) {opt_text}",
+                    callback_data=f"quiz:ans:{lesson_id}:{q_index}:{score}:{opt_idx}",
+                )
+            ]
+        )
+    kb = InlineKeyboardMarkup(inline_keyboard=kb_rows)
+
+    await callback.message.answer(
+        f"📝 <b>Savol {q_index + 1} / {len(quizzes)}:</b>\n\n"
+        f"{quiz['question']}",
+        parse_mode="HTML",
+        reply_markup=kb,
+    )
+
+
+@router.callback_query(F.data.startswith("quiz:ans:"))
+async def quiz_answer_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
+    if callback.message is None or callback.from_user is None or callback.data is None:
+        return
+
+    parts = callback.data.split(":")
+    lesson_id = parts[2]
+    q_index = int(parts[3])
+    score = int(parts[4])
+    chosen_opt = int(parts[5])
+
+    quizzes = await get_quizzes_for_lesson(lesson_id)
+    if not quizzes or q_index >= len(quizzes):
+        return
+
+    quiz = quizzes[q_index]
+    correct_idx = int(quiz.get("correct_option_index", 0))
+
+    if chosen_opt == correct_idx:
+        score += 1
+        msg = "✅ <b>To'g'ri javob!</b>"
+    else:
+        corr_letter = chr(65 + correct_idx)
+        explanation = quiz.get("explanation", "").strip()
+        msg = f"❌ <b>Noto'g'ri javob.</b> To'g'ri variant: <b>{corr_letter}</b>"
+        if explanation:
+            msg += f"\n💡 <i>Izoh: {explanation}</i>"
+
+    await callback.message.answer(msg, parse_mode="HTML")
+
+    # Proceed to next question
+    next_data = f"quiz:start:{lesson_id}:{q_index + 1}:{score}"
+    next_kb = InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="➡️ Keyingi savol", callback_data=next_data)]]
+    )
+    await callback.message.answer("Davom etish uchun bosing:", reply_markup=next_kb)
+
+
+# ==========================================
+# PERSONAL PROFILE & LEADERBOARD
+# ==========================================
+
+@router.message(Command("profil"))
+@router.message(F.text == "👤 Shaxsiy kabinet")
+async def profile_handler(message: Message) -> None:
+    if not await _subscription_gate(message):
+        return
+
+    user = await get_user(message.from_user.id)
+    if not user:
+        return
+
+    stats = await get_user_stats(message.from_user.id)
+    link = await _referral_link(message)
+    req_invites = await get_required_invites()
+    ref_count = user.get("referral_count", 0)
+
+    # Progress bar
+    percent = stats["percent"]
+    filled = percent // 10
+    bar = "█" * filled + "░" * (10 - filled)
+
+    share_url = (
+        "https://t.me/share/url?url="
+        f"{quote_plus(link)}&text={quote_plus('Darslarni bepul o‘rganish uchun botga qo‘shiling!')}"
+        if link
+        else ""
+    )
+    rows = []
+    if share_url:
+        rows.append(
+            [InlineKeyboardButton(text="👥 Do'stlarni taklif qilish", url=share_url)]
+        )
+
+    profile_text = (
+        f"👤 <b>Shaxsiy Kabinet</b>\n\n"
+        f"🆔 <b>ID:</b> <code>{user['user_id']}</code>\n"
+        f"👤 <b>Ism:</b> {user.get('full_name', 'Foydalanuvchi')}\n"
+        f"🔗 <b>Username:</b> @{user['username'] if user.get('username') else 'mavjud emas'}\n\n"
+        f"📊 <b>Darslar progressi:</b>\n"
+        f"[{bar}] <b>{percent}%</b>\n"
+        f"Tugatilgan darslar: <b>{stats['completed_lessons']} / {stats['total_lessons']}</b> ta\n\n"
+        f"👥 <b>Referral statistikasi:</b>\n"
+        f"Taklif qilgan do'stlaringiz: <b>{ref_count}</b> ta (Talab: {req_invites} ta)\n\n"
+        f"🔗 <b>Sizning taklif havolangiz:</b>\n<code>{link}</code>"
+    )
+
+    await message.answer(
+        profile_text,
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=rows) if rows else None,
+    )
+
+
+@router.message(Command("reyting"))
+@router.message(F.text == "🏆 Reyting")
+async def leaderboard_handler(message: Message) -> None:
+    if not await _subscription_gate(message):
+        return
+
+    leaders = await get_leaderboard(limit=10)
+    if not leaders:
+        await message.answer("🏆 Hozircha reytingda hech kim yo'q. Do'stlaringizni birinchi bo'lib taklif qiling!")
+        return
+
+    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+    text_lines = ["🏆 <b>Eng ko'p do'st taklif qilgan faollar (TOP-10):</b>\n"]
+
+    for idx, row in enumerate(leaders):
+        medal = medals[idx] if idx < len(medals) else f"{idx + 1}."
+        name = row.get("full_name") or (f"@{row['username']}" if row.get("username") else f"ID: {row['user_id']}")
+        count = row.get("referral_count", 0)
+        text_lines.append(f"{medal} <b>{name}</b> — <b>{count}</b> ta taklif")
+
+    await message.answer("\n".join(text_lines), parse_mode="HTML")
+
+
+@router.message(F.text == "📢 Kanalimiz")
+async def channels_info_handler(message: Message) -> None:
+    channels = await get_required_channels()
+    if not channels:
+        await message.answer("Hozircha rasmiy kanallar ulanmagan.")
+        return
+
+    kb_rows = [
+        [
+            InlineKeyboardButton(
+                text=f"📢 {ch.get('title', 'Kanal')}",
+                url=join_link_for_channel(ch),
+            )
+        ]
+        for ch in channels
+        if join_link_for_channel(ch) != "https://t.me/"
+    ]
+    await message.answer(
+        "Rasmiy kanallarimizga a'zo bo'ling va eng so'nggi yangiliklardan boxabar bo'ling:",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_rows),
+    )
+
+
+@router.message(F.text == "ℹ️ Yordam")
+async def help_handler(message: Message) -> None:
+    await message.answer(
+        "ℹ️ <b>Botdan qanday foydalaniladi?</b>\n\n"
+        "1. <b>📚 Darslar</b> — kurs darslarini ketma-ket tomosha qiling va testlarni yeching.\n"
+        "2. <b>👤 Shaxsiy kabinet</b> — o'zlashtirish foizingiz va taklif havolangizni oling.\n"
+        "3. <b>🏆 Reyting</b> — eng ko'p do'st chaqirgan yetakchilar ro'yxati.\n"
+        "4. Savol yoki takliflar bo'lsa adminga murojaat qiling.",
+        parse_mode="HTML",
+    )

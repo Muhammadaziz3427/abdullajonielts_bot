@@ -4,8 +4,19 @@
     "username": "yursinaliev",
     "full_name": "Yursinaliev",
     "is_subscribed": false,
-    "last_checked_at": "2026-09-08T17:29:20.291302+00:00",
+    "last_checked_at": "2026-09-08T17:48:04.767382+00:00",
     "is_banned": false,
-    "referral_count": 0
+    "referral_count": 0,
+    "referral_credited": false
+  },
+  "711653743": {
+    "user_id": 711653743,
+    "username": "",
+    "full_name": "Kazakbayeva Masturaxon",
+    "is_subscribed": false,
+    "is_banned": false,
+    "referral_count": 0,
+    "last_checked_at": "2026-09-08T17:46:37.141062+00:00",
+    "referral_credited": false
   }
 }

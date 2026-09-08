@@ -6,12 +6,13 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.enums import ParseMode
 from aiogram.types import BotCommand
 
 from config import ADMIN_ID, BOT_TOKEN
 from handlers import admin, user
-from utils.file_manager import ensure_data_files
-
+from middlewares.throttling import ThrottlingMiddleware
+from utils.db import init_db
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,27 +22,33 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    if not BOT_TOKEN or BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
-        raise RuntimeError(
-            "BOT_TOKEN sozlanmagan. Replit Secrets bo'limida BOT_TOKEN ni kiriting."
-        )
-    if ADMIN_ID <= 0:
-        raise RuntimeError(
-            "ADMIN_ID sozlanmagan. Replit environment variables bo'limida ADMIN_ID ni kiriting."
-        )
+    if not BOT_TOKEN:
+        raise RuntimeError("BOT_TOKEN sozlanmagan.")
 
-    ensure_data_files()
+    # Initialize SQLite database and run migrations
+    await init_db()
+    logger.info("Ma'lumotlar bazasi (SQLite) tayyorlandi.")
 
     bot = Bot(token=BOT_TOKEN)
     dispatcher = Dispatcher()
+
+    # Register anti-spam throttling middleware
+    throttling = ThrottlingMiddleware(rate_limit=0.4)
+    dispatcher.message.middleware(throttling)
+    dispatcher.callback_query.middleware(throttling)
+
+    # Register routers
     dispatcher.include_router(admin.router)
     dispatcher.include_router(user.router)
 
+    # Set bot commands in menu
     await bot.set_my_commands(
         [
             BotCommand(command="start", description="Botni ishga tushirish"),
-            BotCommand(command="darslar", description="Darslar ro'yxati"),
-            BotCommand(command="admin", description="Admin panel"),
+            BotCommand(command="darslar", description="Kurs darslari"),
+            BotCommand(command="profil", description="Shaxsiy kabinet"),
+            BotCommand(command="reyting", description="Foydalanuvchilar reytingi"),
+            BotCommand(command="admin", description="Admin boshqaruv paneli"),
             BotCommand(command="cancel", description="Joriy amalni bekor qilish"),
         ]
     )

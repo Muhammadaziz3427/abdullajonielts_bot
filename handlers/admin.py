@@ -1,10 +1,9 @@
-"""Complete Telegram-only admin control panel."""
+"""Complete Telegram-only admin control panel with database support, Excel export, and quiz management."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
-import uuid
 from typing import Any
 
 from aiogram import F, Router
@@ -13,6 +12,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import (
+    BufferedInputFile,
     CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -20,23 +20,29 @@ from aiogram.types import (
 )
 
 from config import ADMIN_ID
-from utils.file_manager import (
+from utils.db import (
+    add_channel,
+    add_lesson,
+    add_quiz,
     count_user_statuses,
+    delete_channel,
+    delete_lesson,
+    delete_quizzes_for_lesson,
+    get_all_users,
+    get_lesson,
+    get_lessons,
+    get_quizzes_for_lesson,
     get_required_channels,
     get_required_invites,
-    get_referral_channel,
-    get_settings,
-    get_user_referral_count,
+    get_setting,
+    get_user,
     is_maintenance_mode,
-    load_lessons,
-    load_users,
-    save_lessons,
-    save_settings,
-    save_users,
+    set_setting,
     set_user_banned,
+    update_lesson,
 )
+from utils.excel_exporter import export_users_to_excel
 from utils.subscription import check_required_subscriptions, join_link_for_channel
-
 
 router = Router(name="admin")
 logger = logging.getLogger(__name__)
@@ -52,6 +58,14 @@ class LessonEdit(StatesGroup):
     title = State()
     description = State()
     file = State()
+
+
+class QuizCreation(StatesGroup):
+    lesson_id = State()
+    question = State()
+    options = State()
+    correct_option = State()
+    explanation = State()
 
 
 class ChannelCreation(StatesGroup):
@@ -70,6 +84,10 @@ class TextSetting(StatesGroup):
 
 class BroadcastState(StatesGroup):
     text = State()
+
+
+class UserSearchState(StatesGroup):
+    user_id = State()
 
 
 def _is_admin(user_id: int | None) -> bool:
@@ -95,28 +113,33 @@ def _admin_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Dashboard / statistika", callback_data="admin:dashboard"
+                    text="📊 Dashboard / Statistika", callback_data="admin:dashboard"
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Darslarni boshqarish", callback_data="admin:lessons"
+                    text="📚 Darslarni boshqarish", callback_data="admin:lessons"
                 ),
                 InlineKeyboardButton(
-                    text="Yangi dars", callback_data="admin:add_lesson"
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Foydalanuvchilar", callback_data="admin:users"
-                ),
-                InlineKeyboardButton(
-                    text="Xabar yuborish", callback_data="admin:broadcast"
+                    text="➕ Yangi dars", callback_data="admin:add_lesson"
                 ),
             ],
             [
                 InlineKeyboardButton(
-                    text="Obuna va taklif sozlamalari",
+                    text="👥 Foydalanuvchilar", callback_data="admin:users"
+                ),
+                InlineKeyboardButton(
+                    text="📥 Excel yuklab olish", callback_data="admin:excel"
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📢 Ommaviy xabar (Rassilka)", callback_data="admin:broadcast"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="⚙️ Obuna va bot sozlamalari",
                     callback_data="admin:settings",
                 )
             ],
@@ -127,7 +150,7 @@ def _admin_keyboard() -> InlineKeyboardMarkup:
 def _back_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Admin panel", callback_data="admin:menu")]
+            [InlineKeyboardButton(text="🔙 Admin panelga qaytish", callback_data="admin:menu")]
         ]
     )
 
@@ -137,37 +160,37 @@ def _settings_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Kanal qo'shish", callback_data="admin:channel:add"
+                    text="➕ Kanal qo'shish", callback_data="admin:channel:add"
                 ),
                 InlineKeyboardButton(
-                    text="Kanallar ro'yxati", callback_data="admin:channel:list"
+                    text="📋 Kanallar ro'yxati", callback_data="admin:channel:list"
                 ),
             ],
             [
                 InlineKeyboardButton(
-                    text="Majburiy takliflar soni", callback_data="admin:invites"
+                    text="🔍 Kanal huquqini tekshirish",
+                    callback_data="admin:channel:check",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Referral kanalini tanlash",
-                    callback_data="admin:referral_channel",
+                    text="👥 Majburiy takliflar soni", callback_data="admin:invites"
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Texnik xizmat rejimi", callback_data="admin:maintenance"
+                    text="🛠 Texnik xizmat rejimi", callback_data="admin:maintenance"
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Xush kelibsiz matni", callback_data="admin:welcome"
+                    text="✏️ Xush kelibsiz matni", callback_data="admin:welcome"
                 ),
                 InlineKeyboardButton(
-                    text="Obuna matni", callback_data="admin:subscription_text"
+                    text="✏️ Obuna matni", callback_data="admin:subscription_text"
                 ),
             ],
-            [InlineKeyboardButton(text="Admin panel", callback_data="admin:menu")],
+            [InlineKeyboardButton(text="🔙 Admin panel", callback_data="admin:menu")],
         ]
     )
 
@@ -177,38 +200,32 @@ def _lesson_actions(lesson_id: str) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Tahrirlash",
+                    text="📝 Test qo'shish",
+                    callback_data=f"admin:quiz:add:{lesson_id}",
+                ),
+                InlineKeyboardButton(
+                    text="🗑 Testlarni tozalash",
+                    callback_data=f"admin:quiz:clear:{lesson_id}",
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text="✏️ Tahrirlash",
                     callback_data=f"admin:lesson:edit:{lesson_id}",
                 ),
                 InlineKeyboardButton(
-                    text="O'chirish",
+                    text="🗑 O'chirish",
                     callback_data=f"admin:lesson:delete:{lesson_id}",
                 ),
-            ]
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🔙 Darslar ro'yxatiga qaytish",
+                    callback_data="admin:lessons",
+                )
+            ],
         ]
     )
-
-
-def _normalize_channel_id(value: str) -> str | int | None:
-    value = value.strip()
-    if value.startswith("https://t.me/"):
-        value = "@" + value.removeprefix("https://t.me/").strip("/")
-    if value.startswith("@") and len(value) > 1:
-        return value
-    if value.lstrip("-").isdigit():
-        return int(value)
-    return None
-
-
-def _save_channels(channels: list[dict[str, Any]]) -> None:
-    settings = get_settings()
-    settings["required_channels"] = channels
-    settings["channel_id"] = channels[0]["channel_id"] if channels else ""
-    save_settings(settings)
-
-
-def _setting_text(key: str, default: str) -> str:
-    return str(get_settings().get(key, default))
 
 
 @router.message(Command("admin"))
@@ -217,7 +234,8 @@ async def admin_handler(message: Message, state: FSMContext) -> None:
         return
     await state.clear()
     await message.answer(
-        "To'liq admin panel. Barcha bot sozlamalari shu yerdan boshqariladi:",
+        "⚡️ <b>To'liq Admin Boshqaruv Paneli:</b>\n\nBarcha sozlamalar, darslar va foydalanuvchilar shu yerdan boshqariladi.",
+        parse_mode="HTML",
         reply_markup=_admin_keyboard(),
     )
 
@@ -236,348 +254,465 @@ async def admin_menu_callback(callback: CallbackQuery, state: FSMContext) -> Non
     if not await _check_admin_callback(callback):
         return
     await state.clear()
-    await callback.answer()
-    if callback.message:
-        await callback.message.answer("Admin panel:", reply_markup=_admin_keyboard())
+    await callback.message.edit_text(
+        "⚡️ <b>To'liq Admin Boshqaruv Paneli:</b>\n\nBarcha sozlamalar, darslar va foydalanuvchilar shu yerdan boshqariladi.",
+        parse_mode="HTML",
+        reply_markup=_admin_keyboard(),
+    )
 
+
+# ==========================================
+# DASHBOARD
+# ==========================================
 
 @router.callback_query(F.data == "admin:dashboard")
-async def dashboard_callback(callback: CallbackQuery) -> None:
+async def dashboard_handler(callback: CallbackQuery) -> None:
     if not await _check_admin_callback(callback):
         return
-    await callback.answer()
-    total, subscribed, banned = count_user_statuses()
-    settings = get_settings()
-    lessons = load_lessons()
-    channels = get_required_channels()
-    await callback.message.answer(
-        "BOT DASHBOARD\n\n"
-        f"Jami foydalanuvchilar: {total}\n"
-        f"Obunasi tasdiqlangan: {subscribed}\n"
-        f"Bloklanganlar: {banned}\n"
-        f"Darslar: {len(lessons)}\n"
-        f"Majburiy kanallar: {len(channels)}\n"
-        f"Majburiy takliflar: {get_required_invites()} ta\n"
-        f"Texnik xizmat: {'yoqilgan' if settings.get('maintenance_mode') else 'o‘chirilgan'}",
-        reply_markup=_back_keyboard(),
+
+    total, subscribed, banned = await count_user_statuses()
+    lessons = await get_lessons(active_only=False)
+    channels = await get_required_channels()
+    req_invites = await get_required_invites()
+    m_mode = "Yoqilgan ⚠️" if await is_maintenance_mode() else "O'chirilgan ✅"
+
+    text = (
+        "📊 <b>Bot Statistikasi va Holati:</b>\n\n"
+        f"👥 <b>Jami foydalanuvchilar:</b> {total} ta\n"
+        f"✅ <b>Obuna bo'lgan faollar:</b> {subscribed} ta\n"
+        f"🚫 <b>Bloklangan foydalanuvchilar:</b> {banned} ta\n\n"
+        f"📚 <b>Jami darslar soni:</b> {len(lessons)} ta\n"
+        f"📢 <b>Majburiy kanallar:</b> {len(channels)} ta\n"
+        f"👥 <b>Majburiy takliflar soni:</b> {req_invites} ta\n"
+        f"🛠 <b>Texnik xizmat rejimi:</b> {m_mode}\n"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=_back_keyboard())
+
+
+# ==========================================
+# EXCEL EXPORT
+# ==========================================
+
+@router.callback_query(F.data == "admin:excel")
+async def excel_export_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+
+    await callback.answer("Excel fayl tayyorlanmoqda...", show_alert=False)
+    excel_stream = await export_users_to_excel()
+    document = BufferedInputFile(excel_stream.read(), filename="bot_foydalanuvchilar.xlsx")
+
+    await callback.message.answer_document(
+        document=document,
+        caption="📊 <b>Barcha foydalanuvchilar va ularning to'liq statistikasi</b> (Excel formati).",
+        parse_mode="HTML",
     )
 
 
-@router.callback_query(F.data == "admin:settings")
-async def settings_callback(callback: CallbackQuery) -> None:
-    if not await _check_admin_callback(callback):
-        return
-    await callback.answer()
-    settings = get_settings()
-    await callback.message.answer(
-        "Obuna va umumiy sozlamalar:\n\n"
-        f"Majburiy kanallar: {len(get_required_channels())} ta\n"
-        f"Har bir foydalanuvchi taklif qilishi kerak: {get_required_invites()} ta\n"
-        f"Referral kanali: {(get_referral_channel() or {}).get('title', 'tanlanmagan')}\n"
-        f"Texnik xizmat: {'yoqilgan' if settings.get('maintenance_mode') else 'o‘chirilgan'}",
-        reply_markup=_settings_keyboard(),
-    )
-
+# ==========================================
+# LESSON MANAGEMENT
+# ==========================================
 
 @router.callback_query(F.data == "admin:lessons")
-async def lessons_admin_list(callback: CallbackQuery) -> None:
+async def admin_lessons_list(callback: CallbackQuery) -> None:
     if not await _check_admin_callback(callback):
         return
-    await callback.answer()
-    lessons = load_lessons()
+
+    lessons = await get_lessons(active_only=False)
     if not lessons:
-        await callback.message.answer(
-            "Hozircha darslar yo'q.", reply_markup=_back_keyboard()
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="➕ Yangi dars qo'shish", callback_data="admin:add_lesson")],
+                [InlineKeyboardButton(text="🔙 Admin panel", callback_data="admin:menu")],
+            ]
         )
+        await callback.message.edit_text("Hozircha darslar mavjud emas.", reply_markup=kb)
         return
-    await callback.message.answer("Darslar ro'yxati:")
-    for lesson in lessons:
-        await callback.message.answer(
-            f"📚 {lesson.get('title', 'Nomsiz dars')}\n"
-            f"{lesson.get('description', '')}",
-            reply_markup=_lesson_actions(str(lesson["id"])),
+
+    kb_rows = []
+    for idx, l in enumerate(lessons, 1):
+        kb_rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"{idx}. {l['title']}",
+                    callback_data=f"admin:lesson:view:{l['id']}",
+                )
+            ]
         )
-    await callback.message.answer("Boshqa amalni tanlang:", reply_markup=_back_keyboard())
+    kb_rows.append([InlineKeyboardButton(text="➕ Yangi dars qo'shish", callback_data="admin:add_lesson")])
+    kb_rows.append([InlineKeyboardButton(text="🔙 Admin panel", callback_data="admin:menu")])
+
+    await callback.message.edit_text(
+        "📚 <b>Mavjud darslar ro'yxati:</b>\nBoshqarish uchun darsni tanlang:",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_rows),
+    )
+
+
+@router.callback_query(F.data.startswith("admin:lesson:view:"))
+async def admin_lesson_detail(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+
+    lesson_id = callback.data.split(":", maxsplit=3)[3]
+    lesson = await get_lesson(lesson_id)
+    if not lesson:
+        await callback.message.edit_text("Dars topilmadi.", reply_markup=_back_keyboard())
+        return
+
+    quizzes = await get_quizzes_for_lesson(lesson_id)
+    media_type = "Video 🎥" if lesson.get("video_file_id") else ("PDF Hujjat 📄" if lesson.get("pdf_file_id") else "Faylsiz ❌")
+
+    text = (
+        f"📖 <b>Dars:</b> {lesson['title']}\n\n"
+        f"📝 <b>Tavsif:</b>\n{lesson.get('description', '')}\n\n"
+        f"📎 <b>Fayl turi:</b> {media_type}\n"
+        f"❓ <b>Biriktirilgan testlar:</b> {len(quizzes)} ta\n"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=_lesson_actions(lesson_id))
 
 
 @router.callback_query(F.data == "admin:add_lesson")
 async def add_lesson_start(callback: CallbackQuery, state: FSMContext) -> None:
     if not await _check_admin_callback(callback):
         return
+
     await state.set_state(LessonCreation.title)
-    await callback.answer()
-    await callback.message.answer(
-        "Yangi dars nomini yuboring.\nBekor qilish uchun /cancel."
+    await callback.message.edit_text(
+        "➕ <b>Yangi dars qo'shish:</b>\n\n1-qadam: Dars nomini (sarlavhasini) kiriting:\n(Bekor qilish uchun /cancel)",
+        parse_mode="HTML",
     )
 
 
-@router.message(LessonCreation.title, F.text)
-async def lesson_title_handler(message: Message, state: FSMContext) -> None:
+@router.message(LessonCreation.title)
+async def lesson_title_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
     title = (message.text or "").strip()
     if not title:
-        await message.answer("Dars nomi bo'sh bo'lmasligi kerak.")
+        await message.answer("Iltimos, dars nomini matn ko'rinishida kiriting:")
         return
     await state.update_data(title=title)
     await state.set_state(LessonCreation.description)
-    await message.answer("Dars tavsifini yuboring.")
+    await message.answer("2-qadam: Dars tavsifini (matnini) kiriting:")
 
 
-@router.message(LessonCreation.description, F.text)
-async def lesson_description_handler(message: Message, state: FSMContext) -> None:
-    description = (message.text or "").strip()
-    if not description:
-        await message.answer("Tavsif bo'sh bo'lmasligi kerak.")
+@router.message(LessonCreation.description)
+async def lesson_desc_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
         return
-    await state.update_data(description=description)
+    desc = (message.text or "").strip()
+    await state.update_data(description=desc)
     await state.set_state(LessonCreation.file)
-    await message.answer("Video yoki PDF fayl yuboring.")
-
-
-async def _save_new_lesson(message: Message, state: FSMContext, file_data: dict[str, Any]) -> None:
-    data = await state.get_data()
-    lesson = {
-        "id": uuid.uuid4().hex[:12],
-        "title": data["title"],
-        "description": data["description"],
-        "video_file_id": file_data.get("video_file_id"),
-        "pdf_file_id": file_data.get("pdf_file_id"),
-    }
-    lessons = load_lessons()
-    lessons.append(lesson)
-    save_lessons(lessons)
-    await state.clear()
-    await message.answer(
-        f"«{lesson['title']}» darsi qo'shildi.", reply_markup=_back_keyboard()
-    )
-
-
-@router.message(LessonCreation.file, F.video)
-async def lesson_video_handler(message: Message, state: FSMContext) -> None:
-    if message.video:
-        await _save_new_lesson(
-            message, state, {"video_file_id": message.video.file_id}
-        )
-
-
-@router.message(LessonCreation.file, F.document)
-async def lesson_document_handler(message: Message, state: FSMContext) -> None:
-    if not message.document:
-        return
-    filename = (message.document.file_name or "").lower()
-    mime_type = (message.document.mime_type or "").lower()
-    if not filename.endswith(".pdf") and mime_type != "application/pdf":
-        await message.answer("Faqat PDF fayl yuboring.")
-        return
-    await _save_new_lesson(
-        message, state, {"pdf_file_id": message.document.file_id}
-    )
+    await message.answer("3-qadam: Dars uchun <b>Video</b> yoki <b>PDF fayl</b> yuboring (yoki o'tkazib yuborish uchun <code>yo'q</code> deb yozing):", parse_mode="HTML")
 
 
 @router.message(LessonCreation.file)
-async def invalid_lesson_file_handler(message: Message) -> None:
-    await message.answer("Iltimos, video yoki PDF fayl yuboring.")
+async def lesson_file_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+
+    data = await state.get_data()
+    video_id = message.video.file_id if message.video else None
+    pdf_id = message.document.file_id if message.document else None
+
+    lesson_id = await add_lesson(
+        title=data["title"],
+        description=data.get("description", ""),
+        video_file_id=video_id,
+        pdf_file_id=pdf_id,
+    )
+    await state.clear()
+    await message.answer(
+        f"✅ <b>Dars muvaffaqiyatli qo'shildi!</b> (ID: <code>{lesson_id}</code>)",
+        parse_mode="HTML",
+        reply_markup=_back_keyboard(),
+    )
 
 
 @router.callback_query(F.data.startswith("admin:lesson:delete:"))
-async def delete_lesson(callback: CallbackQuery) -> None:
+async def delete_lesson_handler(callback: CallbackQuery) -> None:
     if not await _check_admin_callback(callback):
         return
-    lesson_id = (callback.data or "").split(":", maxsplit=3)[3]
-    lessons = load_lessons()
-    remaining = [lesson for lesson in lessons if lesson.get("id") != lesson_id]
-    save_lessons(remaining)
-    await callback.answer(
-        "Dars o'chirildi." if len(remaining) < len(lessons) else "Dars topilmadi."
-    )
+
+    lesson_id = callback.data.split(":", maxsplit=3)[3]
+    await delete_lesson(lesson_id)
+    await callback.message.edit_text("🗑 Dars o'chirildi.", reply_markup=_back_keyboard())
 
 
-@router.callback_query(F.data.startswith("admin:lesson:edit:"))
-async def edit_lesson_start(callback: CallbackQuery, state: FSMContext) -> None:
+# ==========================================
+# QUIZ MANAGEMENT (FOR LESSONS)
+# ==========================================
+
+@router.callback_query(F.data.startswith("admin:quiz:add:"))
+async def add_quiz_start(callback: CallbackQuery, state: FSMContext) -> None:
     if not await _check_admin_callback(callback):
         return
-    lesson_id = (callback.data or "").split(":", maxsplit=3)[3]
-    if not any(item.get("id") == lesson_id for item in load_lessons()):
-        await callback.answer("Dars topilmadi.", show_alert=True)
-        return
+
+    lesson_id = callback.data.split(":", maxsplit=3)[3]
+    await state.set_state(QuizCreation.question)
     await state.update_data(lesson_id=lesson_id)
-    await state.set_state(LessonEdit.title)
-    await callback.answer()
-    await callback.message.answer(
-        "Yangi nomni yuboring yoki o'zgartirmaslik uchun /skip yuboring."
+
+    await callback.message.edit_text(
+        "📝 <b>Darsga yangi test savolini qo'shish:</b>\n\n"
+        "1-qadam: Savol matnini kiriting:\n(Bekor qilish uchun /cancel)",
+        parse_mode="HTML",
     )
 
 
-@router.message(LessonEdit.title, F.text)
-async def edit_lesson_title(message: Message, state: FSMContext) -> None:
-    if message.text != "/skip":
-        value = (message.text or "").strip()
-        if not value:
-            await message.answer("Nom bo'sh bo'lmasligi kerak.")
-            return
-        await state.update_data(title=value)
-    await state.set_state(LessonEdit.description)
-    await message.answer("Yangi tavsifni yuboring yoki /skip.")
+@router.message(QuizCreation.question)
+async def quiz_question_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+    q = (message.text or "").strip()
+    if not q:
+        await message.answer("Savol matnini kiriting:")
+        return
+    await state.update_data(question=q)
+    await state.set_state(QuizCreation.options)
+    await message.answer(
+        "2-qadam: Javob variantlarini har bir qatorda bittadan kiriting.\nMasalan:\n\n"
+        "Variant A\nVariant B\nVariant C\nVariant D"
+    )
 
 
-@router.message(LessonEdit.description, F.text)
-async def edit_lesson_description(message: Message, state: FSMContext) -> None:
-    if message.text != "/skip":
-        value = (message.text or "").strip()
-        if not value:
-            await message.answer("Tavsif bo'sh bo'lmasligi kerak.")
-            return
-        await state.update_data(description=value)
-    await state.set_state(LessonEdit.file)
-    await message.answer("Yangi video/PDF yuboring yoki faylni saqlash uchun /skip.")
+@router.message(QuizCreation.options)
+async def quiz_options_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+    lines = [line.strip() for line in (message.text or "").split("\n") if line.strip()]
+    if len(lines) < 2:
+        await message.answer("Kamida 2 ta variant bo'lishi kerak. Qaytadan kiriting:")
+        return
+
+    await state.update_data(options=lines)
+    await state.set_state(QuizCreation.correct_option)
+
+    opts_preview = "\n".join([f"{idx + 1}. {opt}" for idx, opt in enumerate(lines)])
+    await message.answer(
+        f"3-qadam: Qaysi variant to'g'ri? Raqamini kiriting (1 dan {len(lines)} gacha):\n\n{opts_preview}"
+    )
 
 
-async def _finish_lesson_edit(
-    message: Message, state: FSMContext, file_data: dict[str, Any] | None = None
-) -> None:
+@router.message(QuizCreation.correct_option)
+async def quiz_correct_opt_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+
     data = await state.get_data()
-    lessons = load_lessons()
-    for lesson in lessons:
-        if lesson.get("id") == data.get("lesson_id"):
-            if "title" in data:
-                lesson["title"] = data["title"]
-            if "description" in data:
-                lesson["description"] = data["description"]
-            if file_data:
-                lesson["video_file_id"] = file_data.get("video_file_id")
-                lesson["pdf_file_id"] = file_data.get("pdf_file_id")
-            save_lessons(lessons)
-            await state.clear()
-            await message.answer("Dars yangilandi.", reply_markup=_back_keyboard())
-            return
-    await state.clear()
-    await message.answer("Dars topilmadi.")
-
-
-@router.message(LessonEdit.file, F.video)
-async def edit_lesson_video(message: Message, state: FSMContext) -> None:
-    if message.video:
-        await _finish_lesson_edit(
-            message, state, {"video_file_id": message.video.file_id}
-        )
-
-
-@router.message(LessonEdit.file, F.document)
-async def edit_lesson_document(message: Message, state: FSMContext) -> None:
-    if not message.document:
+    options = data.get("options", [])
+    try:
+        val = int((message.text or "").strip())
+        if val < 1 or val > len(options):
+            raise ValueError
+        correct_idx = val - 1
+    except ValueError:
+        await message.answer(f"Iltimos, 1 dan {len(options)} gacha bo'lgan raqam kiriting:")
         return
-    if not (
-        (message.document.file_name or "").lower().endswith(".pdf")
-        or (message.document.mime_type or "").lower() == "application/pdf"
-    ):
-        await message.answer("Faqat PDF fayl yuboring.")
+
+    await state.update_data(correct_option_index=correct_idx)
+    await state.set_state(QuizCreation.explanation)
+    await message.answer("4-qadam: Noto'g'ri javob berilganda chiqadigan izoh (yoki o'tkazib yuborish uchun <code>yo'q</code> deb yozing):", parse_mode="HTML")
+
+
+@router.message(QuizCreation.explanation)
+async def quiz_explanation_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
         return
-    await _finish_lesson_edit(
-        message, state, {"pdf_file_id": message.document.file_id}
+
+    exp = (message.text or "").strip()
+    if exp.lower() in ("yo'q", "yoq", "none", "-"):
+        exp = ""
+
+    data = await state.get_data()
+    await add_quiz(
+        lesson_id=data["lesson_id"],
+        question=data["question"],
+        options=data["options"],
+        correct_option_index=data["correct_option_index"],
+        explanation=exp,
     )
+    await state.clear()
+    await message.answer("✅ <b>Test savoli darsga muvaffaqiyatli qo'shildi!</b>", parse_mode="HTML", reply_markup=_back_keyboard())
 
 
-@router.message(LessonEdit.file, F.text)
-async def edit_lesson_skip_file(message: Message, state: FSMContext) -> None:
-    if message.text == "/skip":
-        await _finish_lesson_edit(message, state)
-    else:
-        await message.answer("Video/PDF yuboring yoki /skip.")
+@router.callback_query(F.data.startswith("admin:quiz:clear:"))
+async def clear_quizzes_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    lesson_id = callback.data.split(":", maxsplit=3)[3]
+    await delete_quizzes_for_lesson(lesson_id)
+    await callback.message.edit_text("🗑 Bu darsdagi barcha testlar o'chirildi.", reply_markup=_back_keyboard())
 
+
+# ==========================================
+# USER MANAGEMENT & BANNING
+# ==========================================
 
 @router.callback_query(F.data == "admin:users")
-async def users_admin_list(callback: CallbackQuery) -> None:
+async def admin_users_menu(callback: CallbackQuery, state: FSMContext) -> None:
     if not await _check_admin_callback(callback):
         return
-    await callback.answer("Ro'yxat yangilanmoqda...")
-    users = load_users()
-    channels = get_required_channels()
-    for user_id_text, user in users.items():
-        try:
-            user_id = int(user_id_text)
-        except ValueError:
-            continue
-        user["is_subscribed"] = (
-            await check_required_subscriptions(callback.bot, user_id, channels)
-        )[0]
-    save_users(users)
 
-    total, subscribed, banned = count_user_statuses()
-    await callback.message.answer(
-        f"Foydalanuvchilar: {total} ta\n"
-        f"Obunasi tasdiqlangan: {subscribed} ta\n"
-        f"Bloklangan: {banned} ta"
+    total, subscribed, banned = await count_user_statuses()
+    await state.set_state(UserSearchState.user_id)
+    await callback.message.edit_text(
+        f"👥 <b>Foydalanuvchilar bo'limi:</b>\n\n"
+        f"Jami: {total} ta | Obunachi: {subscribed} ta | Bloklangan: {banned} ta\n\n"
+        f"Foydalanuvchini boshqarish (bloklash/ochish) uchun uning <b>Telegram ID</b> sini yuboring:",
+        parse_mode="HTML",
+        reply_markup=_back_keyboard(),
     )
-    for user_id_text, user in list(users.items())[:50]:
-        username = f"@{user['username']}" if user.get("username") else "username yo'q"
-        status = "a'zo" if user.get("is_subscribed") else "a'zo emas"
-        banned_status = " | BLOKLANGAN" if user.get("is_banned") else ""
-        await callback.message.answer(
-            f"{user.get('full_name', 'Nomaʼlum')} | {username}\n"
-            f"ID: {user_id_text} | {status}{banned_status}\n"
-            f"Takliflari: {user.get('referral_count', 0)} ta",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="Blokdan chiqarish"
-                            if user.get("is_banned")
-                            else "Bloklash",
-                            callback_data=f"admin:user:toggle:{user_id_text}",
-                        )
-                    ]
-                ]
-            ),
-        )
-    await callback.message.answer("Admin panel:", reply_markup=_back_keyboard())
 
 
-@router.callback_query(F.data.startswith("admin:user:toggle:"))
-async def toggle_user_ban(callback: CallbackQuery) -> None:
+@router.message(UserSearchState.user_id)
+async def user_search_handler(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+
+    try:
+        user_id = int((message.text or "").strip())
+    except ValueError:
+        await message.answer("Iltimos, to'g'ri raqamli ID kiriting:")
+        return
+
+    user = await get_user(user_id)
+    if not user:
+        await message.answer("Bunday ID li foydalanuvchi topilmadi.", reply_markup=_back_keyboard())
+        return
+
+    await state.clear()
+    is_ban = bool(user.get("is_banned"))
+    action_text = "Blokdan chiqarish ✅" if is_ban else "Bloklash 🚫"
+    action_callback = f"admin:user:unban:{user_id}" if is_ban else f"admin:user:ban:{user_id}"
+
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=action_text, callback_data=action_callback)],
+            [InlineKeyboardButton(text="🔙 Qaytish", callback_data="admin:menu")],
+        ]
+    )
+
+    text = (
+        f"👤 <b>Foydalanuvchi ma'lumoti:</b>\n\n"
+        f"🆔 ID: <code>{user['user_id']}</code>\n"
+        f"👤 Ism: {user.get('full_name')}\n"
+        f"🔗 Username: @{user.get('username') or 'yoq'}\n"
+        f"👥 Taklif qilganlari: {user.get('referral_count', 0)} ta\n"
+        f"🚫 Blok holati: {'Bloklangan' if is_ban else 'Faol'}\n"
+    )
+    await message.answer(text, parse_mode="HTML", reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith("admin:user:ban:"))
+async def ban_user_handler(callback: CallbackQuery) -> None:
     if not await _check_admin_callback(callback):
         return
-    user_id_text = (callback.data or "").split(":", maxsplit=3)[3]
-    users = load_users()
-    if user_id_text not in users:
-        await callback.answer("Foydalanuvchi topilmadi.", show_alert=True)
-        return
-    new_value = not bool(users[user_id_text].get("is_banned"))
-    set_user_banned(int(user_id_text), new_value)
-    await callback.answer("Foydalanuvchi holati yangilandi.")
+    user_id = int(callback.data.split(":")[3])
+    await set_user_banned(user_id, True)
+    await callback.message.edit_text(f"🚫 Foydalanuvchi ({user_id}) bloklandi.", reply_markup=_back_keyboard())
 
+
+@router.callback_query(F.data.startswith("admin:user:unban:"))
+async def unban_user_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    user_id = int(callback.data.split(":")[3])
+    await set_user_banned(user_id, False)
+    await callback.message.edit_text(f"✅ Foydalanuvchi ({user_id}) blokdan chiqarildi.", reply_markup=_back_keyboard())
+
+
+# ==========================================
+# BROADCAST (RASSILKA)
+# ==========================================
 
 @router.callback_query(F.data == "admin:broadcast")
 async def broadcast_start(callback: CallbackQuery, state: FSMContext) -> None:
     if not await _check_admin_callback(callback):
         return
     await state.set_state(BroadcastState.text)
-    await callback.answer()
-    await callback.message.answer(
-        "Barcha bloklanmagan foydalanuvchilarga yuboriladigan xabarni yozing."
+    await callback.message.edit_text(
+        "📢 <b>Barcha foydalanuvchilarga ommaviy xabar yuborish:</b>\n\n"
+        "Xabar matnini yoki mediali postni yuboring:\n(Bekor qilish uchun /cancel)",
+        parse_mode="HTML",
     )
 
 
-@router.message(BroadcastState.text, F.text)
-async def broadcast_handler(message: Message, state: FSMContext) -> None:
-    text = (message.text or "").strip()
-    if not text:
-        await message.answer("Xabar bo'sh bo'lmasligi kerak.")
+@router.message(BroadcastState.text)
+async def broadcast_send(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
         return
-    sent = 0
-    failed = 0
-    for user_id_text, user in load_users().items():
-        if user.get("is_banned"):
-            continue
-        try:
-            await message.bot.send_message(int(user_id_text), text)
-            sent += 1
-            await asyncio.sleep(0.05)
-        except (TelegramAPIError, ValueError):
-            failed += 1
+
     await state.clear()
-    await message.answer(
-        f"Xabar yuborildi.\nYetkazildi: {sent} ta\nXato: {failed} ta",
+    users = await get_all_users()
+    status_msg = await message.answer(f"⏳ Xabar {len(users)} ta foydalanuvchiga yuborilmoqda...")
+
+    success = 0
+    failed = 0
+    for u in users:
+        try:
+            await message.copy_to(chat_id=u["user_id"])
+            success += 1
+            await asyncio.sleep(0.05)
+        except Exception:
+            failed += 1
+
+    await status_msg.edit_text(
+        f"✅ <b>Ommaviy xabar yuborildi!</b>\n\n"
+        f"Yetib bordi: <b>{success}</b> ta\n"
+        f"Yetib bormadi (bloklangan/o'chirilgan): <b>{failed}</b> ta",
+        parse_mode="HTML",
         reply_markup=_back_keyboard(),
     )
+
+
+# ==========================================
+# SETTINGS & CHANNELS
+# ==========================================
+
+@router.callback_query(F.data == "admin:settings")
+async def admin_settings_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    await callback.message.edit_text("⚙️ <b>Bot Sozlamalari:</b>", parse_mode="HTML", reply_markup=_settings_keyboard())
+
+
+@router.callback_query(F.data == "admin:channel:list")
+async def channel_list_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+
+    channels = await get_required_channels()
+    if not channels:
+        await callback.message.edit_text("Hozircha majburiy kanallar qo'shilmagan.", reply_markup=_settings_keyboard())
+        return
+
+    kb_rows = []
+    for ch in channels:
+        kb_rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"🗑 O'chirish: {ch.get('title', ch['channel_id'])}",
+                    callback_data=f"admin:channel:del:{ch['channel_id']}",
+                )
+            ]
+        )
+    kb_rows.append([InlineKeyboardButton(text="🔙 Sozlamalar", callback_data="admin:settings")])
+
+    await callback.message.edit_text(
+        "📋 <b>Majburiy kanallar ro'yxati:</b>\nO'chirish uchun kanalni tanlang:",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_rows),
+    )
+
+
+@router.callback_query(F.data.startswith("admin:channel:del:"))
+async def channel_delete_handler(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    channel_id = callback.data.split(":", maxsplit=3)[3]
+    await delete_channel(channel_id)
+    await callback.message.edit_text("🗑 Kanal o'chirildi.", reply_markup=_settings_keyboard())
 
 
 @router.callback_query(F.data == "admin:channel:add")
@@ -585,229 +720,85 @@ async def channel_add_start(callback: CallbackQuery, state: FSMContext) -> None:
     if not await _check_admin_callback(callback):
         return
     await state.set_state(ChannelCreation.channel_id)
-    await callback.answer()
-    await callback.message.answer(
-        "Kanal username yoki ID sini yuboring.\n"
-        "Misol: @kanal_nomi yoki -1001234567890"
+    await callback.message.edit_text(
+        "➕ <b>Yangi majburiy kanal qo'shish:</b>\n\n"
+        "1-qadam: Kanal username (masalan: <code>@kanal_nomi</code>) yoki ID sini (masalan: <code>-1001234567890</code>) kiriting:\n\n"
+        "<i>Eslatma: Bot ushbu kanalda admin bo'lishi shart!</i>",
+        parse_mode="HTML",
     )
 
 
-@router.message(ChannelCreation.channel_id, F.text)
-async def channel_id_handler(message: Message, state: FSMContext) -> None:
-    channel_id = _normalize_channel_id(message.text or "")
-    if channel_id is None:
-        await message.answer("@kanal_nomi yoki -100... ko'rinishida yuboring.")
+@router.message(ChannelCreation.channel_id)
+async def channel_id_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
         return
-    await state.update_data(channel_id=channel_id)
+    cid = (message.text or "").strip()
+    await state.update_data(channel_id=cid)
     await state.set_state(ChannelCreation.title)
-    await message.answer("Kanal nomini yuboring yoki /skip.")
+    await message.answer("2-qadam: Kanal nomini (tugmada ko'rinadigan sarlavhani) kiriting:")
 
 
-@router.message(ChannelCreation.title, F.text)
-async def channel_title_handler(message: Message, state: FSMContext) -> None:
-    title = (message.text or "").strip()
-    if title == "/skip":
-        title = str((await state.get_data())["channel_id"])
-    if not title:
-        await message.answer("Kanal nomi bo'sh bo'lmasin.")
+@router.message(ChannelCreation.title)
+async def channel_title_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
         return
+    title = (message.text or "").strip()
     await state.update_data(title=title)
     await state.set_state(ChannelCreation.link)
-    await message.answer(
-        "Kanalga kirish havolasini yuboring yoki public kanal bo'lsa /skip."
-    )
+    await message.answer("3-qadam: Kanal taklif havolasini (linkini) kiriting (yoki o'tkazib yuborish uchun <code>yo'q</code> deb yozing):", parse_mode="HTML")
 
 
-@router.message(ChannelCreation.link, F.text)
-async def channel_link_handler(message: Message, state: FSMContext) -> None:
+@router.message(ChannelCreation.link)
+async def channel_link_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
     link = (message.text or "").strip()
-    if link == "/skip":
+    if link.lower() in ("yo'q", "yoq", "none", "-"):
         link = ""
-    elif not link.startswith(("https://t.me/", "http://t.me/")):
-        await message.answer("Havola https://t.me/... ko'rinishida bo'lishi kerak.")
-        return
+
     data = await state.get_data()
-    channels = get_required_channels()
-    channels.append(
-        {
-            "channel_id": data["channel_id"],
-            "title": data["title"],
-            "join_link": link,
-        }
-    )
-    _save_channels(channels)
+    await add_channel(channel_id=data["channel_id"], title=data["title"], join_link=link)
     await state.clear()
-    await message.answer("Majburiy kanal qo'shildi.", reply_markup=_settings_keyboard())
-
-
-@router.callback_query(F.data == "admin:channel:list")
-async def channel_list_callback(callback: CallbackQuery) -> None:
-    if not await _check_admin_callback(callback):
-        return
-    await callback.answer()
-    channels = get_required_channels()
-    if not channels:
-        await callback.message.answer(
-            "Majburiy kanallar sozlanmagan.", reply_markup=_settings_keyboard()
-        )
-        return
-    await callback.message.answer("Majburiy kanallar:")
-    for index, channel in enumerate(channels):
-        await callback.message.answer(
-            f"{index + 1}. {channel.get('title')} — {channel.get('channel_id')}\n"
-            f"Havola: {join_link_for_channel(channel)}",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="O'chirish",
-                            callback_data=f"admin:channel:delete:{index}",
-                        )
-                    ]
-                ]
-            ),
-        )
-    await callback.message.answer("Sozlamalar:", reply_markup=_settings_keyboard())
-
-
-@router.callback_query(F.data.startswith("admin:channel:delete:"))
-async def channel_delete_callback(callback: CallbackQuery) -> None:
-    if not await _check_admin_callback(callback):
-        return
-    try:
-        index = int((callback.data or "").split(":", maxsplit=3)[3])
-    except ValueError:
-        await callback.answer("Noto'g'ri kanal.", show_alert=True)
-        return
-    channels = get_required_channels()
-    if index < 0 or index >= len(channels):
-        await callback.answer("Kanal topilmadi.", show_alert=True)
-        return
-    channels.pop(index)
-    _save_channels(channels)
-    await callback.answer("Kanal o'chirildi.")
+    await message.answer("✅ <b>Majburiy kanal muvaffaqiyatli qo'shildi!</b>", parse_mode="HTML", reply_markup=_settings_keyboard())
 
 
 @router.callback_query(F.data == "admin:invites")
-async def invites_start(callback: CallbackQuery, state: FSMContext) -> None:
+async def invites_setting_start(callback: CallbackQuery, state: FSMContext) -> None:
     if not await _check_admin_callback(callback):
         return
+    curr = await get_required_invites()
     await state.set_state(NumberSetting.value)
-    await state.update_data(setting_key="required_invites")
-    await callback.answer()
-    await callback.message.answer(
-        f"Har bir foydalanuvchi nechta odam taklif qilishi shart?\n"
-        f"Hozirgi qiymat: {get_required_invites()}.\n"
-        "0 yuborsangiz, bu talab o'chadi."
+    await callback.message.edit_text(
+        f"👥 <b>Majburiy takliflar soni sozlamasi:</b>\n\n"
+        f"Hozirgi talab: <b>{curr} ta</b>\n\n"
+        f"Yangi sonni kiriting (o'chirib qo'yish uchun <code>0</code> yozing):",
+        parse_mode="HTML",
     )
 
 
-@router.callback_query(F.data == "admin:referral_channel")
-async def referral_channel_start(callback: CallbackQuery) -> None:
-    if not await _check_admin_callback(callback):
-        return
-    channels = get_required_channels()
-    if not channels:
-        await callback.answer("Avval kamida bitta majburiy kanal qo'shing.", show_alert=True)
-        return
-    await callback.answer()
-    await callback.message.answer(
-        "Referral hisobiga tushadigan kanalni tanlang:",
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text=str(channel.get("title")),
-                        callback_data=f"admin:referral:set:{index}",
-                    )
-                ]
-                for index, channel in enumerate(channels)
-            ]
-            + [[InlineKeyboardButton(text="Orqaga", callback_data="admin:settings")]]
-        ),
-    )
-
-
-@router.callback_query(F.data.startswith("admin:referral:set:"))
-async def referral_channel_set(callback: CallbackQuery) -> None:
-    if not await _check_admin_callback(callback):
+@router.message(NumberSetting.value)
+async def invites_setting_save(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
         return
     try:
-        index = int((callback.data or "").split(":", maxsplit=3)[3])
-    except ValueError:
-        await callback.answer("Noto'g'ri kanal.", show_alert=True)
-        return
-    channels = get_required_channels()
-    if index < 0 or index >= len(channels):
-        await callback.answer("Kanal topilmadi.", show_alert=True)
-        return
-    settings = get_settings()
-    settings["referral_channel_id"] = channels[index]["channel_id"]
-    save_settings(settings)
-    await callback.answer("Referral kanali saqlandi.")
-    await callback.message.answer(
-        f"Referral kanali: {channels[index].get('title')}",
-        reply_markup=_settings_keyboard(),
-    )
-
-
-@router.message(NumberSetting.value, F.text)
-async def number_setting_handler(message: Message, state: FSMContext) -> None:
-    try:
-        value = int((message.text or "").strip())
-        if value < 0:
+        val = int((message.text or "").strip())
+        if val < 0:
             raise ValueError
     except ValueError:
-        await message.answer("Faqat 0 yoki undan katta butun son yuboring.")
+        await message.answer("Iltimos, musbat butun son kiriting (masalan: 0, 1, 3, 5):")
         return
-    data = await state.get_data()
-    settings = get_settings()
-    settings[data.get("setting_key", "required_invites")] = value
-    save_settings(settings)
+
+    await set_setting("required_invites", str(val))
     await state.clear()
-    await message.answer(
-        f"Majburiy takliflar soni {value} ta qilib saqlandi.",
-        reply_markup=_settings_keyboard(),
-    )
+    await message.answer(f"✅ Majburiy takliflar soni <b>{val} ta</b> qilib belgilandi!", parse_mode="HTML", reply_markup=_settings_keyboard())
 
 
 @router.callback_query(F.data == "admin:maintenance")
-async def maintenance_callback(callback: CallbackQuery) -> None:
+async def maintenance_toggle(callback: CallbackQuery) -> None:
     if not await _check_admin_callback(callback):
         return
-    settings = get_settings()
-    settings["maintenance_mode"] = not bool(settings.get("maintenance_mode"))
-    save_settings(settings)
-    await callback.answer(
-        "Texnik xizmat rejimi yoqildi."
-        if settings["maintenance_mode"]
-        else "Texnik xizmat rejimi o'chirildi."
-    )
-
-
-@router.callback_query(F.data.in_({"admin:welcome", "admin:subscription_text"}))
-async def text_setting_start(callback: CallbackQuery, state: FSMContext) -> None:
-    if not await _check_admin_callback(callback):
-        return
-    key = "welcome_text" if callback.data == "admin:welcome" else "subscription_text"
-    await state.set_state(TextSetting.value)
-    await state.update_data(setting_key=key)
-    await callback.answer()
-    await callback.message.answer(
-        "Yangi matnni yuboring. Bekor qilish uchun /cancel.\n\n"
-        f"Amaldagi matn:\n{_setting_text(key, '')}"
-    )
-
-
-@router.message(TextSetting.value, F.text)
-async def text_setting_handler(message: Message, state: FSMContext) -> None:
-    value = (message.text or "").strip()
-    if not value:
-        await message.answer("Matn bo'sh bo'lmasligi kerak.")
-        return
-    data = await state.get_data()
-    settings = get_settings()
-    settings[data.get("setting_key", "welcome_text")] = value
-    save_settings(settings)
-    await state.clear()
-    await message.answer("Matn saqlandi.", reply_markup=_settings_keyboard())
+    curr = await is_maintenance_mode()
+    new_val = not curr
+    await set_setting("maintenance_mode", "true" if new_val else "false")
+    status_str = "Yoqildi ⚠️" if new_val else "O'chirildi ✅"
+    await callback.message.edit_text(f"🛠 <b>Texnik xizmat rejimi:</b> {status_str}", parse_mode="HTML", reply_markup=_settings_keyboard())
