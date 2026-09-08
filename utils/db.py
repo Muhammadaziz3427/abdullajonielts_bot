@@ -469,11 +469,6 @@ async def add_lesson(
     video_file_id: str | None = None,
     pdf_file_id: str | None = None,
 ) -> str:
-    title: str,
-    description: str = "",
-    video_file_id: str | None = None,
-    pdf_file_id: str | None = None,
-) -> str:
     lesson_id = uuid.uuid4().hex[:12]
     now = _utc_now()
     async with get_connection() as conn:
