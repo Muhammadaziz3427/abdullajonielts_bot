@@ -55,6 +55,7 @@ async def main() -> None:
 
     logger.info("Makhmudov Abdullajon bot ishga tushdi")
     try:
+        await bot.delete_webhook(drop_pending_updates=True)
         await dispatcher.start_polling(bot)
     finally:
         await bot.session.close()
