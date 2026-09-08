@@ -26,14 +26,18 @@ kerak.
 - `bot.py` — polling va routerlarni ishga tushiradi
 - `config.py` — token, admin ID va fayl yo'llari
 - `handlers/user.py` — `/start`, `/darslar`, obuna va dars yuborish
-- `handlers/admin.py` — dars, foydalanuvchi va kanal boshqaruvi
+- `handlers/admin.py` — dashboard, dars, foydalanuvchi, kanal, taklif va xabar boshqaruvi
 - `utils/file_manager.py` — atomik JSON o'qish/yozish
-- `utils/subscription.py` — Telegram kanal a'zoligini tekshirish
+- `utils/subscription.py` — bir nechta Telegram kanal a'zoligini tekshirish
 - `data/` — users, lessons va settings JSON fayllari
 
 ## Muhim qarorlar
 
 - Video va PDF fayllar serverga yuklanmaydi: Telegram yuborgan `file_id`
   `lessons.json` ichida saqlanadi.
-- Foydalanuvchi `/start`, `/darslar` yoki dars tugmasidan foydalanishda obunasi
-  qayta tekshiriladi; obuna bekor qilinsa, darslar yopiladi.
+- Foydalanuvchi `/start`, `/darslar` yoki dars tugmasidan foydalanishda barcha
+  majburiy kanallarga obunasi qayta tekshiriladi; obuna bekor qilinsa, darslar yopiladi.
+- Majburiy takliflar soni yoqilsa, hisob botning `?start=ref_<user_id>` deep-link
+  orqali ro'yxatdan o'tgan yangi foydalanuvchilar asosida yuritiladi.
+- Admin xabari, welcome matni, obuna matni, texnik xizmat rejimi va bloklangan
+  foydalanuvchilar ham JSON sozlamalar orqali boshqariladi.

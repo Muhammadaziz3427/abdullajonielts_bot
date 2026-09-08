@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Iterable
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
@@ -49,3 +49,24 @@ async def check_subscription(
     if member.status in {"member", "administrator", "creator"}:
         return True
     return member.status == "restricted" and bool(getattr(member, "is_member", False))
+
+
+async def check_required_subscriptions(
+    bot: Bot, user_id: int, channels: Iterable[dict[str, Any]]
+) -> tuple[bool, list[dict[str, Any]]]:
+    """Check every configured channel and return the channels still missing."""
+    missing: list[dict[str, Any]] = []
+    for channel in channels:
+        channel_id = channel.get("channel_id")
+        if channel_id in (None, ""):
+            continue
+        if not await check_subscription(bot, user_id, channel_id):
+            missing.append(channel)
+    return not missing, missing
+
+
+def join_link_for_channel(channel: dict[str, Any]) -> str:
+    custom_link = str(channel.get("join_link", "")).strip()
+    if custom_link:
+        return custom_link
+    return channel_link(channel.get("channel_id"))
