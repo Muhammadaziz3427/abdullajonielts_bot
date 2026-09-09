@@ -16,7 +16,7 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8861024990:AAGVhWrMxB6nFO4B7Cme5i2EgE83fZj_xAI").strip()
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 try:
     ADMIN_ID = int(os.getenv("ADMIN_ID", "1350472397"))
