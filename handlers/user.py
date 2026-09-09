@@ -713,14 +713,15 @@ async def ielts_mock_menu_handler(message: Message) -> None:
     if not await _subscription_gate(message):
         return
 
-    webapp_url = await get_setting("mock_webapp_url", "")
+    default_url = "https://muhammadaziz3427.github.io/abdullajonielts_bot/webapp"
+    webapp_url = (await get_setting("mock_webapp_url", "")).strip() or default_url
 
     rows = []
     if webapp_url:
         rows.append(
             [
                 InlineKeyboardButton(
-                    text="🚀 WebApp Mock Testni Ochish",
+                    text="🚀 WebApp Mock Portalni Ochish",
                     web_app=WebAppInfo(url=webapp_url),
                 )
             ]
@@ -728,13 +729,22 @@ async def ielts_mock_menu_handler(message: Message) -> None:
 
     rows.append(
         [
-            InlineKeyboardButton(text="📖 Reading Mock #1", callback_data="mock:info:reading"),
-            InlineKeyboardButton(text="🎧 Listening Mock #1", callback_data="mock:info:listening"),
+            InlineKeyboardButton(
+                text="📖 Reading Mock #1",
+                web_app=WebAppInfo(url=f"{webapp_url.rstrip('/')}/reading.html"),
+            ),
+            InlineKeyboardButton(
+                text="🎧 Listening Mock #1",
+                web_app=WebAppInfo(url=f"{webapp_url.rstrip('/')}/listening.html"),
+            ),
         ]
     )
     rows.append(
         [
-            InlineKeyboardButton(text="✍️ Writing Mock #1", callback_data="mock:info:writing"),
+            InlineKeyboardButton(
+                text="✍️ Writing Mock #1",
+                web_app=WebAppInfo(url=f"{webapp_url.rstrip('/')}/writing.html"),
+            ),
         ]
     )
 
@@ -744,7 +754,7 @@ async def ielts_mock_menu_handler(message: Message) -> None:
         "• <b>Reading Mock:</b> 3 ta akademik passage, 40 ta savol, 60 daqiqa va avtomatik Band hisoblagich.\n"
         "• <b>Listening Mock:</b> 4 ta audio qism, 40 ta savol, 30 daqiqa va avto-tahlil.\n"
         "• <b>Writing Mock:</b> Task 1 (Report 150+ so'z) va Task 2 (Essay 250+ so'z) - jonli so'z hisoblagich bilan.\n\n"
-        "<i>Boshlash uchun kerakli bo'limni tanlang:</i>"
+        "<i>Boshlash uchun pastdagi WebApp tugmalaridan birini bosing:</i>"
     )
     await message.answer(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
 
@@ -753,7 +763,8 @@ async def ielts_mock_menu_handler(message: Message) -> None:
 async def mock_info_callback(callback: CallbackQuery) -> None:
     await callback.answer()
     module = callback.data.split(":")[2]
-    webapp_url = await get_setting("mock_webapp_url", "")
+    default_url = "https://muhammadaziz3427.github.io/abdullajonielts_bot/webapp"
+    webapp_url = (await get_setting("mock_webapp_url", "")).strip() or default_url
 
     if module == "reading":
         title = "📖 IELTS Reading Mock #1"

@@ -206,6 +206,11 @@ def _settings_keyboard() -> InlineKeyboardMarkup:
                     text="✏️ Obuna matni", callback_data="admin:subscription_text"
                 ),
             ],
+            [
+                InlineKeyboardButton(
+                    text="🌐 Mock WebApp URL sozlash", callback_data="admin:webapp_url"
+                )
+            ],
             [InlineKeyboardButton(text="🔙 Admin panel", callback_data="admin:menu")],
         ]
     )
@@ -1133,3 +1138,67 @@ async def maintenance_toggle(callback: CallbackQuery) -> None:
     await set_setting("maintenance_mode", "true" if new_val else "false")
     status_str = "Yoqildi ⚠️" if new_val else "O'chirildi ✅"
     await callback.message.edit_text(f"🛠 <b>Texnik xizmat rejimi:</b> {status_str}", parse_mode="HTML", reply_markup=_settings_keyboard())
+
+
+@router.callback_query(F.data == "admin:webapp_url")
+async def webapp_url_setting_start(callback: CallbackQuery, state: FSMContext) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    curr = await get_setting("mock_webapp_url", "Hali ulanmagan")
+    await state.set_state(TextSetting.value)
+    await state.update_data(setting_key="mock_webapp_url")
+    await callback.message.edit_text(
+        f"🌐 <b>Mock WebApp URL manzili sozlamasi:</b>\n\n"
+        f"Hozirgi havola: <code>{curr}</code>\n\n"
+        f"Yangi <b>HTTPS</b> havolani kiriting (masalan: <code>https://muhammadaziz3427.github.io/abdullajonielts_bot/webapp</code>):\n"
+        f"(Bekor qilish uchun /cancel)",
+        parse_mode="HTML",
+    )
+
+
+@router.callback_query(F.data == "admin:welcome")
+async def welcome_text_setting_start(callback: CallbackQuery, state: FSMContext) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    curr = await get_setting("welcome_text", "Assalomu alaykum...")
+    await state.set_state(TextSetting.value)
+    await state.update_data(setting_key="welcome_text")
+    await callback.message.edit_text(
+        f"✏️ <b>Xush kelibsiz matni sozlamasi:</b>\n\n"
+        f"Hozirgi matn:\n<i>{curr}</i>\n\n"
+        f"Yangi matnni kiriting:\n(Bekor qilish uchun /cancel)",
+        parse_mode="HTML",
+    )
+
+
+@router.callback_query(F.data == "admin:subscription_text")
+async def sub_text_setting_start(callback: CallbackQuery, state: FSMContext) -> None:
+    if not await _check_admin_callback(callback):
+        return
+    curr = await get_setting("subscription_text", "Botdan foydalanish uchun...")
+    await state.set_state(TextSetting.value)
+    await state.update_data(setting_key="subscription_text")
+    await callback.message.edit_text(
+        f"✏️ <b>Obuna talabi matni sozlamasi:</b>\n\n"
+        f"Hozirgi matn:\n<i>{curr}</i>\n\n"
+        f"Yangi matnni kiriting:\n(Bekor qilish uchun /cancel)",
+        parse_mode="HTML",
+    )
+
+
+@router.message(TextSetting.value)
+async def text_setting_save(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+    val = (message.text or "").strip()
+    if not val:
+        await message.answer("Iltimos, matn yuboring:")
+        return
+
+    data = await state.get_data()
+    key = data.get("setting_key", "")
+    if key:
+        await set_setting(key, val)
+
+    await state.clear()
+    await message.answer("✅ <b>Sozlama muvaffaqiyatli saqlandi!</b>", parse_mode="HTML", reply_markup=_settings_keyboard())
