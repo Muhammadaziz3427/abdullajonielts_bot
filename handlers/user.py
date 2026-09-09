@@ -796,3 +796,26 @@ async def mock_info_callback(callback: CallbackQuery) -> None:
 async def mock_back_callback(callback: CallbackQuery) -> None:
     await callback.answer()
     await callback.message.delete()
+
+
+@router.message(F.web_app_data)
+async def web_app_data_handler(message: Message) -> None:
+    data_str = message.web_app_data.data if message.web_app_data else ""
+    try:
+        import json
+        data = json.loads(data_str)
+        module = data.get("module", "IELTS Mock")
+        score = data.get("correct", 0)
+        total = data.get("total", 40)
+        band = data.get("band", "-")
+
+        text = (
+            f"🎉 <b>IELTS {module} Mock Natijangiz Qabul Qilindi!</b>\n\n"
+            f"🎯 <b>To'g'ri javoblar:</b> {score} / {total}\n"
+            f"📊 <b>IELTS Band Score:</b> <code>{band}</code>\n\n"
+            f"<i>Ajoyib natija! Bilimingizni yanada mustahkamlash uchun darslarimizni kuzatib boring.</i>\n\n"
+            f"<i>By <a href='https://t.me/yursinaliev'>Yursinaliev Muhammadaziz</a></i>"
+        )
+        await message.answer(text, parse_mode="HTML")
+    except Exception:
+        await message.answer("✅ Mock test natijangiz muvaffaqiyatli qabul qilindi!")

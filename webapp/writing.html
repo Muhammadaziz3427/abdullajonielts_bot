@@ -1,96 +1,2730 @@
 <!DOCTYPE html>
-<html lang="uz">
+
+<html lang="en" class="h-full overflow-hidden">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IELTS Writing Mock #1 | Abdullajon Makhmudov</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --primary: #d97706;
-      --bg: #f8fafc;
-      --border: #e2e8f0;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); padding-bottom: 80px; }
-    .top-bar {
-      position: sticky; top: 0; background: #fff; z-index: 100;
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; border-bottom: 1px solid var(--border);
-    }
-    .home-link { text-decoration: none; color: var(--primary); font-weight: 600; font-size: 14px; }
-    .container { max-width: 800px; margin: 0 auto; padding: 16px; }
-    .task-card {
-      background: #fff; border: 1px solid var(--border); border-radius: 12px;
-      padding: 18px; margin-bottom: 20px;
-    }
-    .task-card h2 { font-size: 17px; color: var(--primary); margin-bottom: 8px; }
-    .prompt-box { background: #f8fafc; border-left: 4px solid var(--primary); padding: 12px; font-size: 14px; margin-bottom: 14px; line-height: 1.5; }
-    textarea {
-      width: 100%; min-height: 200px; padding: 14px; border: 1px solid var(--border);
-      border-radius: 8px; font-size: 15px; line-height: 1.6; resize: vertical;
-    }
-    textarea:focus { outline: none; border-color: var(--primary); }
-    .counter { font-size: 13px; font-weight: 700; color: #64748b; margin-top: 6px; text-align: right; }
-    .bottom-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
-      padding: 12px 16px; border-top: 1px solid var(--border);
-      display: flex; justify-content: center; z-index: 100;
-    }
-    .btn-submit {
-      background: var(--primary); color: #fff; border: none; padding: 12px 32px;
-      font-size: 15px; font-weight: 700; border-radius: 10px; cursor: pointer; width: 100%; max-width: 400px;
-    }
-  </style>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, interactive-widget=resizes-content, viewport-fit=cover">
+
+    <title>CD IELTS Writing Mock #1 | Makhmudov Abdullajon</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Docx library for Word generation -->
+
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.min.js"></script>
+
+    <style>
+
+        /* ===================== CDI THEME ENGINE ===================== */
+
+        :root {
+
+            --bg-color: #ffffff;
+
+            --text-color: #000000;
+
+            --header-bg: #ffffff;
+
+            --border-color: #d1d5db;
+
+            --input-bg: #ffffff;
+
+            --dropdown-bg: #ffffff;
+
+            --dropdown-hover: #f3f4f6;
+
+            --icon-color: #333333;
+
+            --logo-filter: none;
+
+        }
+
+        body.theme-white { --bg-color:#ffffff; --text-color:#000000; --header-bg:#ffffff; --dropdown-bg:#ffffff; --dropdown-hover:#f3f4f6; --icon-color:#333333; --logo-filter:none; }
+
+        body.theme-black { --bg-color:#000000; --text-color:#ffffff; --header-bg:#000000; --border-color:#ffffff; --input-bg:#1a1a1a; --dropdown-bg:#ffffff; --dropdown-hover:#f3f4f6; --icon-color:#ffffff; --logo-filter:brightness(0) invert(1); }
+
+        body.theme-yellow { --bg-color:#000000; --text-color:#ffff00; --header-bg:#000000; --border-color:#ffff00; --input-bg:#000000; --dropdown-bg:#000000; --dropdown-hover:#333300; --icon-color:#ffff00; --logo-filter:brightness(0) invert(1); }
+
+
+
+        body { background-color:var(--bg-color); color:var(--text-color); font-family:'Arial',sans-serif; overflow:hidden; height:100%; padding-top:env(safe-area-inset-top); -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+        header { background-color:var(--header-bg) !important; border-color:var(--border-color) !important; height:56px; }
+
+        input, select, textarea { background-color:var(--input-bg) !important; color:var(--text-color) !important; border-color:var(--border-color) !important; }
+
+        #ielts-logo { filter:var(--logo-filter); }
+
+        .icon-stroke { stroke:var(--icon-color); }
+
+        #settings-dropdown { background-color:var(--dropdown-bg); border:1px solid var(--border-color); color:var(--text-color); }
+
+        .menu-item:hover { background-color:var(--dropdown-hover); }
+
+
+
+        /* INSTRUCTION BAR */
+
+        #instruction-bar {
+
+            background-color: #F1F2EC !important;
+
+            border-color: #d1d5db !important;
+
+            color: #000000 !important;
+
+        }
+
+        body.theme-black #instruction-bar { background-color:#000000 !important; border-color:#ffffff !important; color:#ffffff !important; }
+
+        body.theme-yellow #instruction-bar { background-color:#000000 !important; border-color:#ffff00 !important; color:#ffff00 !important; }
+
+
+
+        /* PANELS */
+
+        #panel-left, #panel-right { background-color:var(--bg-color) !important; }
+
+        #panel-left::-webkit-scrollbar, #panel-right::-webkit-scrollbar { width:17px; }
+
+        #panel-left::-webkit-scrollbar-track, #panel-right::-webkit-scrollbar-track { background:transparent; }
+
+        #panel-left::-webkit-scrollbar-thumb, #panel-right::-webkit-scrollbar-thumb { background:#999999; border-radius:0; }
+
+
+
+        /* RESIZER */
+
+        #resizer:hover #resizer-line { background-color:#2A6C96 !important; }
+
+        #resizer:hover #resizer-icon { border-color:#2A6C96 !important; background-color:#E5E5E5 !important; }
+
+        #resizer:hover #resizer-icon svg { color:#2A6C96 !important; }
+
+        body.resizing-active #resizer #resizer-icon { background-color:#2A6C96 !important; border-color:#2A6C96 !important; }
+
+        body.resizing-active #resizer #resizer-icon svg { color:#ffffff !important; }
+
+        body.resizing-active #resizer #resizer-line { background-color:#2A6C96 !important; }
+
+        body.resizer-used #resizer-line { width:2px !important; }
+
+
+
+        /* TASK CONTENT */
+
+        #task-content, #task-content p { font-size:16px !important; line-height:1.5 !important; }
+
+        body:not(.theme-black) #task-content, body:not(.theme-black) #task-content p,
+
+        body:not(.theme-black) #task-content h3, body:not(.theme-black) #task-content strong { color:#000000 !important; }
+
+        body.theme-black #task-content, body.theme-black #task-content p,
+
+        body.theme-black #task-content strong, body.theme-black #task-content h3 { color:#ffffff !important; }
+
+        body.theme-yellow #task-content, body.theme-yellow #task-content p,
+
+        body.theme-yellow #task-content strong, body.theme-yellow #task-content h3 { color:#FFFF00 !important; }
+
+
+
+        /* TEXTAREA */
+
+        #writing-textarea {
+
+            width: 100%;
+
+            height: calc(100% - 100px);
+
+            resize: none;
+
+            padding: 16px;
+
+            font-size: 16px;
+
+            line-height: 1.6;
+
+            border: 1px solid #d1d5db;
+
+            border-radius: 4px;
+
+            outline: none;
+
+            font-family: Arial, sans-serif;
+
+        }
+
+        #writing-textarea:focus { border-color: #418EC8; box-shadow: 0 0 0 1px #418EC8; }
+
+        body.theme-black #writing-textarea { background-color:#1a1a1a !important; color:#ffffff !important; border-color:#555 !important; }
+
+        body.theme-black #writing-textarea:focus { border-color:#BE7137 !important; box-shadow:0 0 0 1px #BE7137 !important; }
+
+        body.theme-yellow #writing-textarea { background-color:#000000 !important; color:#ffff00 !important; border-color:#555500 !important; }
+
+        body.theme-yellow #writing-textarea:focus { border-color:#FF0DFF !important; box-shadow:0 0 0 1px #FF0DFF !important; }
+
+
+
+        /* WORD COUNT */
+
+        #word-count-display {
+
+            position: absolute;
+
+            bottom: 12px;
+
+            right: 20px;
+
+            font-size: 14px;
+
+            font-weight: 500;
+
+            color: #6b7280;
+
+            background: rgba(255,255,255,0.9);
+
+            padding: 4px 10px;
+
+            border-radius: 3px;
+
+            border: 1px solid #e5e7eb;
+
+        }
+
+        body.theme-black #word-count-display { background:rgba(0,0,0,0.9); color:#9ca3af; border-color:#555; }
+
+        body.theme-yellow #word-count-display { background:rgba(0,0,0,0.9); color:#ffff00; border-color:#555500; }
+
+
+
+        /* FOOTER - WHITE BACKGROUND */
+
+        .writing-footer {
+
+            position: fixed;
+
+            bottom: 0;
+
+            left: 0;
+
+            right: 0;
+
+            height: 50px;
+
+            background-color: #ffffff !important;
+
+            border-top: 1px solid #d1d5db;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0;
+
+            font-family: Arial, sans-serif;
+
+            z-index: 60;
+
+        }
+
+        body.theme-black .writing-footer { background-color:#000000 !important; border-top-color:#333; }
+
+        body.theme-yellow .writing-footer { background-color:#000000 !important; border-top-color:#555500; }
+
+
+
+        /* Footer sections - clickable, centered text */
+
+        .footer-section {
+
+            flex: 1;
+
+            height: 100%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 15px;
+
+            cursor: pointer;
+
+            transition: background-color 0.2s;
+
+        }
+
+        .footer-section:hover {
+
+            background-color: #f9fafb;
+
+        }
+
+        body.theme-black .footer-section:hover { background-color: #1a1a1a; }
+
+        body.theme-yellow .footer-section:hover { background-color: #1a1a1a; }
+
+
+
+        /* Submit button styles */
+
+        #submit-btn {
+
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+
+            color: white;
+
+            border: none;
+
+            padding: 9px 28px;
+
+            border-radius: 6px;
+
+            font-weight: 700;
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            transition: all 0.2s;
+
+            margin: 0 24px;
+
+            letter-spacing: 0.3px;
+
+        }
+
+        #submit-btn:hover {
+
+            background: linear-gradient(135deg, #6d28d9, #5b21b6);
+
+            transform: translateY(-1px);
+
+            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+
+        }
+
+        #submit-btn:active { transform: translateY(0); }
+
+
+
+        body.theme-black #footer-left-part, body.theme-black #footer-right-part { color:#9ca3af !important; }
+
+        body.theme-yellow #footer-left-part, body.theme-yellow #footer-right-part { color:#888800 !important; }
+
+
+
+        /* NAV ARROWS */
+
+        #prev-task-btn, #next-task-btn { width:56px; height:56px; border:none; border-radius:2px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+        #prev-task-btn { background:#4C4C4C; color:white; }
+
+        #next-task-btn { background:#000; color:white; }
+
+        #prev-task-btn:disabled, #next-task-btn:disabled { background:#DDDDDD; cursor:not-allowed; }
+
+        #prev-task-btn svg, #next-task-btn svg { width:30px; height:30px; }
+
+
+
+        /* TIMER */
+
+        body.theme-black #timer-box { border:1px solid #ffffff !important; background-color:#000000 !important; }
+
+        body.theme-black #timer-text { color:#ffffff !important; }
+
+        body.theme-yellow #timer-box { background-color:transparent !important; border-color:#FFFF00 !important; }
+
+        body.theme-yellow #timer-text { color:#FFFF00 !important; }
+
+
+
+        /* MENU */
+
+        body.theme-black #settings-dropdown { background-color:#ffffff !important; }
+
+        body.theme-black #settings-dropdown, body.theme-black #settings-dropdown span, body.theme-black #settings-dropdown div { color:#000000 !important; }
+
+        body.theme-black #settings-dropdown svg { color:#6b7280 !important; }
+
+        body.theme-black #settings-dropdown .menu-item:hover { background-color:#f3f4f6 !important; }
+
+        body.theme-black header { border-bottom:1px solid #333333 !important; }
+
+        body:not(.theme-black) #settings-dropdown, body:not(.theme-black) #settings-dropdown div,
+
+        body:not(.theme-black) #settings-dropdown span, body:not(.theme-black) #settings-dropdown svg { color:#000000 !important; }
+
+        body.theme-yellow #settings-dropdown { background-color:#000000 !important; border-color:#ffff00 !important; }
+
+        body.theme-yellow #settings-dropdown, body.theme-yellow #settings-dropdown span, body.theme-yellow #settings-dropdown div { color:#FFFF00 !important; }
+
+        body.theme-yellow #settings-dropdown .menu-item:hover { background-color:#333300 !important; }
+
+        body.theme-yellow #settings-dropdown .menu-item { border-bottom-color:#444400 !important; }
+
+        body.theme-yellow header { border-bottom:1px solid #ffffff !important; }
+
+
+
+        /* TEXT SIZE */
+
+        html { font-size:16px; }
+
+        body.size-large { font-size:19px !important; }
+
+        body.size-xl { font-size:22px !important; }
+
+        body.size-large #task-content, body.size-large #task-content p, body.size-large #writing-textarea { font-size:19px !important; line-height:1.6 !important; }
+
+        body.size-xl #task-content, body.size-xl #task-content p, body.size-xl #writing-textarea { font-size:22px !important; line-height:1.6 !important; }
+
+
+
+        .hidden { display:none !important; }
+
+
+
+        /* ── MOBILE RESPONSIVE ── */
+
+        @media (max-width: 768px) {
+
+            /* Header — clean layout */
+
+            header { 
+
+                padding: 0 10px !important; 
+
+                grid-template-columns: 48px 1fr 48px !important;
+
+                gap: 0 !important;
+
+            }
+
+            header .flex.items-center.gap-5 { gap: 4px !important; }
+
+            header .flex.flex-col { display: none !important; }
+
+            #icon-wifi, #icon-bell, #icon-note { display: none !important; }
+
+            #ielts-logo { height: 22px !important; }
+
+            #timer-box { padding: 3px 12px !important; margin: 0 auto; }
+
+            #timer-text { font-size: 13px !important; }
+
+            /* Menu button */
+
+            header > div:last-child { margin-right: 0 !important; gap: 0 !important; }
+
+            #btn-menu svg { width: 24px !important; height: 26px !important; }
+
+
+
+            /* Hide instruction bar */
+
+            #instruction-bar { display: none !important; }
+
+
+
+            /* Stack panels vertically — 50/50 split */
+
+            #main-container {
+
+                flex-direction: column !important;
+
+                height: calc(100vh - 100px - env(safe-area-inset-top)) !important;
+
+            }
+
+            /* Prevent text auto-resize during panel drag */
+
+            #panel-left, #panel-right, #task-content, #writing-textarea {
+
+                -webkit-text-size-adjust: 100% !important;
+
+                text-size-adjust: 100% !important;
+
+            }
+
+
+
+            /* Top panel — task/question — full width edge to edge */
+
+            #panel-left {
+
+                width: 100% !important;
+
+                height: 50%;
+
+                min-height: 60px;
+
+                flex: none !important;
+
+                overflow-y: auto !important;
+
+                overflow-x: hidden !important;
+
+                padding: 12px 10px !important;
+
+                border-bottom: none !important;
+
+                border-right: none !important;
+
+                -webkit-overflow-scrolling: touch;
+
+                transform: translateZ(0);
+
+            }
+
+            /* Hide fat scrollbar on mobile — use thin overlay */
+
+            #panel-left::-webkit-scrollbar { width: 3px !important; }
+
+            #panel-left::-webkit-scrollbar-thumb { background: #ccc !important; border-radius: 3px !important; }
+
+            #panel-left::-webkit-scrollbar-track { background: transparent !important; }
+
+            /* Force all content to fit within panel */
+
+            #panel-left * { max-width: 100% !important; box-sizing: border-box !important; }
+
+            #task-content { 
+
+                width: 100% !important; 
+
+                overflow-wrap: break-word !important;
+
+                transform: none !important;
+
+                padding: 0 !important;
+
+            }
+
+
+
+            /* Mobile resizer — horizontal pill */
+
+            #resizer {
+
+                width: 100% !important;
+
+                height: 28px !important;
+
+                flex: 0 0 28px !important;
+
+                cursor: row-resize !important;
+
+                margin-left: 0 !important;
+
+                touch-action: none;
+
+                user-select: none;
+
+            }
+
+            #resizer-hover-bg { display: none !important; }
+
+            #resizer-line {
+
+                position: absolute; left: 0; right: 0; top: 50%;
+
+                height: 1px !important; width: 100% !important;
+
+                transform: translateY(-50%) !important;
+
+                background: #d1d5db !important;
+
+            }
+
+            body.theme-black #resizer-line { background: #444 !important; }
+
+            body.theme-yellow #resizer-line { background: #555500 !important; }
+
+            #resizer-icon {
+
+                width: auto !important; height: auto !important;
+
+                border-radius: 20px !important;
+
+                padding: 4px 18px !important;
+
+                border: 1.5px solid #adb5bd !important;
+
+                background: #fff !important;
+
+                box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+
+            }
+
+            #resizer-icon svg { display: none !important; }
+
+            #resizer-icon::after {
+
+                content: '';
+
+                display: block;
+
+                width: 28px; height: 6px;
+
+                background: radial-gradient(circle, #9ca3af 2px, transparent 2px),
+
+                            radial-gradient(circle, #9ca3af 2px, transparent 2px),
+
+                            radial-gradient(circle, #9ca3af 2px, transparent 2px);
+
+                background-size: 8px 100%; background-position: 0 50%, 10px 50%, 20px 50%;
+
+                background-repeat: no-repeat;
+
+            }
+
+            body.theme-black #resizer-icon { background: #111 !important; border-color: #555 !important; }
+
+            body.theme-yellow #resizer-icon { background: #000 !important; border-color: #666600 !important; }
+
+            body.resizing-active #resizer-icon { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
+
+            body.resizing-active #resizer-line { background: #7c3aed !important; }
+
+
+
+            /* Bottom panel — writing */
+
+            #panel-right {
+
+                flex: 1 1 0 !important;
+
+                width: 100% !important;
+
+                min-width: 0 !important;
+
+                min-height: 80px !important;
+
+                overflow: hidden !important;
+
+                padding: 6px !important;
+
+                position: relative !important;
+
+                display: flex !important;
+
+                flex-direction: column !important;
+
+            }
+
+            #writing-textarea {
+
+                flex: 1 !important;
+
+                width: 100% !important;
+
+                min-height: 60px !important;
+
+                font-size: 14px !important;
+
+                padding: 10px !important;
+
+                box-sizing: border-box !important;
+
+            }
+
+            #word-count-display {
+
+                bottom: 4px !important; right: 10px !important;
+
+                font-size: 10px !important; padding: 2px 5px !important;
+
+            }
+
+
+
+            /* Nav arrows — smaller, above footer */
+
+            div[style*="bottom:90px"] {
+
+                bottom: 50px !important; right: 8px !important; z-index: 55 !important;
+
+            }
+
+            #prev-task-btn, #next-task-btn { width: 36px !important; height: 36px !important; }
+
+            #prev-task-btn svg, #next-task-btn svg { width: 20px !important; height: 20px !important; }
+
+
+
+            /* Footer — compact */
+
+            .writing-footer { height: 44px !important; }
+
+            .footer-section { font-size: 12px !important; }
+
+            #submit-btn { padding: 6px 14px !important; font-size: 11px !important; margin: 0 8px !important; }
+
+
+
+            /* Task content */
+
+            #task-content { font-size: 14px !important; }
+
+            #task-content p, #task-content h3 { font-size: 14px !important; }
+
+
+
+            /* Image — fits exactly in panel, no overflow */
+
+            #task-chart, #task-content img {
+
+                max-width: 100% !important; 
+
+                width: 100% !important;
+
+                height: auto !important;
+
+                cursor: zoom-in;
+
+                display: block !important;
+
+                margin: 8px 0 !important;
+
+            }
+
+        }
+
+
+
+        /* Image zoom overlay */
+
+        #img-zoom-overlay {
+
+            display: none; position: fixed; inset: 0; z-index: 9999;
+
+            background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+
+        }
+
+        #img-zoom-overlay.active { display: flex; }
+
+        #img-zoom-overlay img {
+
+            max-width: 95vw; max-height: 90vh; object-fit: contain;
+
+            transform-origin: center center; transition: transform 0.2s;
+
+        }
+
+
+
+        /* CHART IMAGE */
+
+        #task-chart { max-width:100%; height:auto; margin:20px 0; }
+
+    </style>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-<body>
-  <div class="top-bar">
-    <a href="index.html" class="home-link">← Chiqish</a>
-    <span style="font-weight: 700;">IELTS Writing Mock #1</span>
-    <span style="font-size: 13px; font-weight:600; color:#dc2626;">60 daqiqa</span>
-  </div>
 
-  <div class="container">
-    <!-- Task 1 -->
-    <div class="task-card">
-      <h2>Task 1 (Academic Report)</h2>
-      <div class="prompt-box">
-        <b>Topic:</b> The chart below shows the percentage of households in different countries with internet access from 2010 to 2020.<br><br>
-        <i>Summarise the information by selecting and reporting the main features, and make comparisons where relevant. Write at least 150 words.</i>
-      </div>
-      <textarea id="task1Text" placeholder="Insho matnini shu yerga yozing..." oninput="countWords('task1Text', 'task1Count', 150)"></textarea>
-      <div class="counter" id="task1Count">So'zlar soni: 0 / 150 ta (Tavsiya: 150+)</div>
+<body class="theme-white">
+
+
+
+<!-- HEADER -->
+
+<header class="border-b border-gray-300 px-4 grid grid-cols-[1fr_auto_1fr] items-center shrink-0 z-[100] shadow-sm bg-white" style="height:56px;">
+
+    <div class="flex items-center gap-5 justify-start">
+
+        <img id="ielts-logo" src="https://Abdullajon.uz/images/ielts.svg" onerror="this.style.display='none'" alt="IELTS" style="height:27px;width:auto;">
+
+        <div class="flex flex-col justify-center">
+
+            <span style="font-size:14px;font-weight:700;line-height:1.2;">Test taker ID</span>
+
+            <span style="font-size:14px;font-weight:500;">0</span>
+
+        </div>
+
     </div>
 
-    <!-- Task 2 -->
-    <div class="task-card">
-      <h2>Task 2 (Discursive Essay)</h2>
-      <div class="prompt-box">
-        <b>Topic:</b> Some people believe that university education should be completely free for all students, while others think students should pay tuition fees.<br><br>
-        <i>Discuss both views and give your own opinion. Write at least 250 words.</i>
-      </div>
-      <textarea id="task2Text" placeholder="Insho matnini shu yerga yozing..." oninput="countWords('task2Text', 'task2Count', 250)"></textarea>
-      <div class="counter" id="task2Count">So'zlar soni: 0 / 250 ta (Tavsiya: 250+)</div>
+    <div class="flex justify-center">
+
+        <div id="timer-box" style="display:flex;align-items:center;padding:4px 16px;background:#F3F4F6;border:1px solid #e5e7eb;border-radius:4px;">
+
+            <span id="timer-text" style="font-size:15px;font-weight:600;color:#1f2937;">60 minutes remaining</span>
+
+        </div>
+
     </div>
-  </div>
 
-  <div class="bottom-bar">
-    <button class="btn-submit" onclick="submitWriting()">Insholarni Saqlash va Topshirish</button>
-  </div>
+    <div class="flex items-center gap-4 justify-end">
 
-  <script>
-    function countWords(areaId, counterId, minWords) {
-      const text = document.getElementById(areaId).value.trim();
-      const count = text ? text.split(/\s+/).length : 0;
-      const counter = document.getElementById(counterId);
-      counter.innerText = `So'zlar soni: ${count} / ${minWords} ta`;
-      counter.style.color = count >= minWords ? '#16a34a' : '#64748b';
+        <button id="icon-wifi" class="hover:opacity-70">
+
+            <svg class="icon-stroke" style="width:24px;height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+
+                <path d="M8.111 16.404a5.5 5.5 0 017.778 0M4.93 12.93c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/><path stroke-linecap="round" d="M12 20h.01"/>
+
+            </svg>
+
+        </button>
+
+        <button id="icon-bell" class="hover:opacity-70">
+
+            <svg class="icon-stroke" style="width:24px;height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+
+            </svg>
+
+        </button>
+
+        <div class="relative" style="margin-right:12px;">
+
+            <button id="btn-menu" class="hover:opacity-70" style="margin-top:6px;">
+
+                <svg style="width:26px;height:28px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.7">
+
+                    <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+
+                </svg>
+
+            </button>
+
+            <div id="settings-dropdown" class="hidden" style="position:absolute;right:0;top:calc(100%+12px);width:280px;border:1px solid #e5e7eb;box-shadow:0 10px 40px rgba(0,0,0,0.15);border-radius:2px;z-index:200;overflow:hidden;background-color:var(--dropdown-bg);">
+
+                <div id="menu-main">
+
+                    <div class="menu-item" style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showSubMenu('contrast')">
+
+                        <div style="display:flex;align-items:center;gap:10px;font-weight:700;">
+
+                            <svg style="width:18px;height:18px;color:#6b7280;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18c4.97 0 9-4.03 9-9s-4.03-9-9-9z" fill="currentColor" opacity="0.5" stroke="none"/></svg>
+
+                            <span>Contrast</span>
+
+                        </div>
+
+                        <svg style="width:14px;height:14px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M9 5l7 7-7 7"/></svg>
+
+                    </div>
+
+                    <div class="menu-item" style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="showSubMenu('size')">
+
+                        <div style="display:flex;align-items:center;gap:10px;font-weight:700;">
+
+                            <svg style="width:18px;height:18px;color:#6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/><path d="M8 10h4m-2-2v4"/></svg>
+
+                            <span>Text size</span>
+
+                        </div>
+
+                        <svg style="width:14px;height:14px;color:#9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M9 5l7 7-7 7"/></svg>
+
+                    </div>
+
+                    <div class="menu-item" style="padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;" onclick="toggleFullScreen()">
+
+                        <svg style="width:18px;height:18px;color:#6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+
+                        <span>Full Screen</span>
+
+                    </div>
+
+                </div>
+
+                <div id="menu-contrast" class="hidden">
+
+                    <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-weight:700;display:flex;align-items:center;gap:10px;cursor:pointer;opacity:0.7;" onclick="showSubMenu('main')">
+
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M15 19l-7-7 7-7"/></svg> Contrast
+
+                    </div>
+
+                    <div class="menu-item" style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;cursor:pointer;" onclick="setTheme('white')"><span>Black on white</span><span id="check-white" style="color:#DC2626;">✓</span></div>
+
+                    <div class="menu-item" style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;cursor:pointer;" onclick="setTheme('black')"><span>White on black</span><span id="check-black" class="hidden">✓</span></div>
+
+                    <div class="menu-item" style="padding:14px 16px;display:flex;justify-content:space-between;cursor:pointer;" onclick="setTheme('yellow')"><span>Yellow on black</span><span id="check-yellow" class="hidden">✓</span></div>
+
+                </div>
+
+                <div id="menu-size" class="hidden">
+
+                    <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-weight:700;display:flex;align-items:center;gap:10px;cursor:pointer;opacity:0.7;" onclick="showSubMenu('main')">
+
+                        <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M15 19l-7-7 7-7"/></svg> Text size
+
+                    </div>
+
+                    <div class="menu-item" style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;cursor:pointer;" onclick="setSize('')"><span>Regular</span><span id="check-reg" style="color:#DC2626;">✓</span></div>
+
+                    <div class="menu-item" style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;cursor:pointer;" onclick="setSize('large')"><span>Large</span><span id="check-large" class="hidden">✓</span></div>
+
+                    <div class="menu-item" style="padding:14px 16px;display:flex;justify-content:space-between;cursor:pointer;" onclick="setSize('xl')"><span>Extra large</span><span id="check-xl" class="hidden">✓</span></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <button id="icon-note" class="hover:opacity-70">
+
+            <svg style="width:24px;height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+
+                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+
+            </svg>
+
+        </button>
+
+    </div>
+
+</header>
+
+
+
+<!-- INSTRUCTION BAR -->
+
+<div id="instruction-bar" style="padding:12px 20px;border-bottom:1px solid #d1d5db;">
+
+    <div id="part-title" style="font-weight:700;font-size:16px;margin-bottom:2px;">Part 1</div>
+
+    <div id="part-instructions" style="font-size:15px;font-weight:400;">You should spend about 20 minutes on this task. Write at least 150 words.</div>
+
+</div>
+
+
+
+<!-- MAIN CONTENT -->
+
+<div id="main-container" style="display:flex;height:calc(100vh - 176px);overflow:hidden;position:relative;">
+
+    
+
+    <!-- LEFT PANEL -->
+
+    <div id="panel-left" style="width:49.6%;height:100%;overflow-y:auto;padding:24px 24px 24px 20px;min-width:10%;">
+
+        <div id="task-content">
+
+            <!-- Populated by JS -->
+
+        </div>
+
+    </div>
+
+
+
+    <!-- RESIZER -->
+
+    <div id="resizer" style="width:16px;margin-left:-8px;height:100%;z-index:20;cursor:col-resize;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;">
+
+        <div style="position:absolute;top:0;bottom:0;left:50%;width:17px;background:#E5E5E5;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:10;" id="resizer-hover-bg"></div>
+
+        <div id="resizer-line" style="position:absolute;top:0;bottom:0;width:2px;left:50%;transform:translateX(-50%);background:#7F7F7F;z-index:30;"></div>
+
+        <div id="resizer-icon" style="background:white;border:2px solid #535353;box-shadow:0 1px 3px rgba(0,0,0,0.1);width:36px;height:36px;display:flex;align-items:center;justify-content:center;position:relative;z-index:40;">
+
+            <svg style="width:24px;height:24px;color:#333;pointer-events:none;" viewBox="0 0 24 24" fill="currentColor">
+
+                <path d="M4 12L9 8V11H15V8L20 12L15 16V13H9V16L4 12Z"/>
+
+            </svg>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- RIGHT PANEL -->
+
+    <div id="panel-right" style="flex:1;height:100%;overflow:hidden;padding:24px 20px 24px 24px;position:relative;min-width:0;">
+
+        <textarea id="writing-textarea" placeholder="Start typing your answer here..."></textarea>
+
+        <div id="word-count-display">Words: 0</div>
+
+    </div>
+
+</div>
+
+
+
+<!-- NAV ARROWS -->
+
+<div style="position:fixed;bottom:90px;right:32px;display:flex;gap:3px;z-index:50;">
+
+    <button id="prev-task-btn" disabled>
+
+        <svg style="transform:translateX(2px);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4.5">
+
+            <path stroke-linecap="round" stroke-linejoin="miter" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h12"/>
+
+        </svg>
+
+    </button>
+
+    <button id="next-task-btn">
+
+        <svg style="transform:translateX(-2px);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4.5">
+
+            <path stroke-linecap="round" stroke-linejoin="miter" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H9"/>
+
+        </svg>
+
+    </button>
+
+</div>
+
+
+
+<!-- FOOTER with clickable sections -->
+
+<footer class="writing-footer">
+
+    <div class="footer-section" id="footer-left-part" onclick="loadTask(1)" style="font-weight:700;color:#000000;">
+
+        Part 1
+
+    </div>
+
+    <button id="submit-btn" onclick="handleSubmit()">✦ Submit & Get Score</button>
+
+    <div class="footer-section" id="footer-right-part" onclick="loadTask(2)" style="font-weight:400;color:#6b7280;">
+
+        Part 2
+
+    </div>
+
+</footer>
+
+
+
+<script>
+
+// =============================================
+
+// TEST DATA
+
+// =============================================
+
+const TEST_NUMBER = 1;
+
+const testData = {
+
+    task1: {
+
+        title: "Part 1",
+
+        instructions: "You should spend about 20 minutes on this task. Write at least 150 words.",
+
+        minWords: 150,
+
+        topicText: "The graph below gives information about the price of bananas in four countries between 1994 and 2004.",
+
+        content: `
+
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">The graph below gives information about the price of bananas in four countries between 1994 and 2004.</h3>
+
+            <p style="margin-bottom:16px;">Summarise the information by selecting and reporting the main features, and make comparisons where relevant.</p>
+
+            <img id="task-chart" src="https://Abdullajon.uz/images/writing2-task1.webp" alt="Chart" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:4px;margin-top:12px;">
+
+        `
+
+    },
+
+    task2: {
+
+        title: "Part 2",
+
+        instructions: "You should spend about 40 minutes on this task. Write at least 250 words.",
+
+        minWords: 250,
+
+        topicText: "Nowadays people are becoming less influenced by advertisement. What’s the main reason? Does it have negative or positive development? ",
+
+        content: `
+
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Write about the following topic:</h3>
+
+            <p style="margin-bottom:16px;line-height:1.7;"><strong>Nowadays people are becoming less influenced by advertisement.</strong></p>
+
+            <p style="margin-bottom:16px;line-height:1.7;"><strong>What’s the main reason? Does it have negative or positive development? </strong></p>
+
+            <p style="line-height:1.7;">Give reasons for your answer and include any relevant examples from your own knowledge or experience.</p>
+
+        `
+
     }
 
-    function submitWriting() {
-      alert("✅ Writing javoblaringiz qabul qilindi! O'qituvchi tekshiruvi uchun yuborildi.");
-      window.location.href = "index.html";
+};
+
+
+
+// =============================================
+
+// STATE
+
+// =============================================
+
+let currentTask = 1;
+
+let answers = { 1: '', 2: '' };
+
+const body = document.body;
+
+
+
+// =============================================
+
+// TIMER
+
+// =============================================
+
+let timeLeft = 60 * 60; // 60 minutes
+
+let timerInterval = null;
+
+
+
+function updateTimer() {
+
+    const m = Math.floor(timeLeft / 60);
+
+    const s = timeLeft % 60;
+
+    document.getElementById('timer-text').textContent = `${m} minute${m===1?'':'s'} remaining`;
+
+    
+
+    const tt = document.getElementById('timer-text');
+
+    if (timeLeft <= 300) {
+
+        tt.style.color = '#DC2626';
+
+    } else if (timeLeft <= 600) {
+
+        tt.style.color = '#DC2626';
+
     }
-  </script>
+
+    
+
+    timeLeft--;
+
+    if (timeLeft < 0) {
+
+        clearInterval(timerInterval);
+
+        alert("Time's up!");
+
+    }
+
+}
+
+
+
+// =============================================
+
+// THEME / SIZE
+
+// =============================================
+
+function showSubMenu(n) {
+
+    ['main','contrast','size'].forEach(id => {
+
+        const el = document.getElementById('menu-'+id);
+
+        if(el) el.classList.toggle('hidden', id !== n);
+
+    });
+
+}
+
+
+
+window.setTheme = t => {
+
+    body.classList.remove('theme-white','theme-black','theme-yellow');
+
+    body.classList.add('theme-'+t);
+
+    ['white','black','yellow'].forEach(id => {
+
+        const el = document.getElementById('check-'+id);
+
+        if(el) el.classList.toggle('hidden', id !== t);
+
+    });
+
+};
+
+
+
+window.setSize = s => {
+
+    body.classList.remove('size-large','size-xl');
+
+    var timerEl = document.getElementById('timer-text');
+
+    var partTitle = document.getElementById('part-title');
+
+    var partInstr = document.getElementById('part-instructions');
+
+    if(s==='large'){
+
+        body.classList.add('size-large');
+
+        document.documentElement.style.fontSize='19px';
+
+        if(timerEl) timerEl.style.fontSize='17px';
+
+        if(partTitle) partTitle.style.fontSize='18px';
+
+        if(partInstr) partInstr.style.fontSize='17px';
+
+    } else if(s==='xl'){
+
+        body.classList.add('size-xl');
+
+        document.documentElement.style.fontSize='22px';
+
+        if(timerEl) timerEl.style.fontSize='20px';
+
+        if(partTitle) partTitle.style.fontSize='20px';
+
+        if(partInstr) partInstr.style.fontSize='19px';
+
+    } else {
+
+        document.documentElement.style.fontSize='16px';
+
+        if(timerEl) timerEl.style.fontSize='';
+
+        if(partTitle) partTitle.style.fontSize='';
+
+        if(partInstr) partInstr.style.fontSize='';
+
+    }
+
+    ['reg','large','xl'].forEach(id => {
+
+        const el = document.getElementById('check-'+id);
+
+        if(el) el.classList.toggle('hidden', (s===''?'reg':s) !== id);
+
+    });
+
+};
+
+
+
+window.toggleFullScreen = () => {
+
+    if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+
+    else document.exitFullscreen();
+
+};
+
+
+
+document.getElementById('btn-menu').onclick = e => {
+
+    e.stopPropagation();
+
+    document.getElementById('settings-dropdown').classList.toggle('hidden');
+
+    showSubMenu('main');
+
+};
+
+
+
+document.addEventListener('click', e => {
+
+    const dd = document.getElementById('settings-dropdown');
+
+    if(dd && !dd.contains(e.target) && !e.target.closest('#btn-menu')) dd.classList.add('hidden');
+
+});
+
+
+
+// =============================================
+
+// RESIZER
+
+// =============================================
+
+const resizer = document.getElementById('resizer');
+
+const leftPanel = document.getElementById('panel-left');
+
+const mainContainer = document.getElementById('main-container');
+
+let isResizing = false;
+
+
+
+function isMobile() { return window.innerWidth <= 768; }
+
+
+
+if(resizer) {
+
+    resizer.addEventListener('mousedown', (e) => {
+
+        isResizing = true;
+
+        document.body.classList.add('resizing-active', 'resizer-used');
+
+        document.body.style.cursor = isMobile() ? 'row-resize' : 'col-resize';
+
+        leftPanel.style.transition = 'none';
+
+        e.preventDefault();
+
+    });
+
+    resizer.addEventListener('touchstart', (e) => {
+
+        isResizing = true;
+
+        document.body.classList.add('resizing-active', 'resizer-used');
+
+        leftPanel.style.transition = 'none';
+
+        e.preventDefault();
+
+    }, { passive: false });
+
+    resizer.addEventListener('mouseenter', () => {
+
+        var bg = document.getElementById('resizer-hover-bg');
+
+        if (bg && !isMobile()) bg.style.opacity = '1';
+
+    });
+
+    resizer.addEventListener('mouseleave', () => {
+
+        if(!isResizing) { var bg = document.getElementById('resizer-hover-bg'); if (bg) bg.style.opacity = '0'; }
+
+    });
+
+}
+
+
+
+document.addEventListener('mousemove', e => {
+
+    if(!isResizing || !mainContainer || !leftPanel) return;
+
+    const rect = mainContainer.getBoundingClientRect();
+
+    if (isMobile()) {
+
+        let newH = e.clientY - rect.top;
+
+        newH = Math.max(rect.height * 0.15, Math.min(rect.height * 0.80, newH));
+
+        leftPanel.style.setProperty('height', newH + 'px', 'important');
+
+    } else {
+
+        let newW = e.clientX - rect.left;
+
+        newW = Math.max(rect.width * 0.10, Math.min(rect.width * 0.90, newW));
+
+        leftPanel.style.width = newW + 'px';
+
+    }
+
+});
+
+
+
+document.addEventListener('touchmove', e => {
+
+    if(!isResizing || !mainContainer || !leftPanel) return;
+
+    const touch = e.touches[0];
+
+    const rect = mainContainer.getBoundingClientRect();
+
+    if (isMobile()) {
+
+        let newH = touch.clientY - rect.top;
+
+        newH = Math.max(rect.height * 0.15, Math.min(rect.height * 0.80, newH));
+
+        leftPanel.style.setProperty('height', newH + 'px', 'important');
+
+    } else {
+
+        let newW = touch.clientX - rect.left;
+
+        newW = Math.max(rect.width * 0.10, Math.min(rect.width * 0.90, newW));
+
+        leftPanel.style.width = newW + 'px';
+
+    }
+
+    e.preventDefault();
+
+}, { passive: false });
+
+
+
+function stopResize() {
+
+    if (!isResizing) return;
+
+    isResizing = false;
+
+    document.body.classList.remove('resizing-active');
+
+    document.body.style.cursor = '';
+
+    leftPanel.style.transition = '';
+
+    var bg = document.getElementById('resizer-hover-bg');
+
+    if (bg) bg.style.opacity = '0';
+
+}
+
+document.addEventListener('mouseup', stopResize);
+
+document.addEventListener('touchend', stopResize);
+
+document.addEventListener('touchcancel', stopResize);
+
+
+
+// =============================================
+
+// WORD COUNT
+
+// =============================================
+
+const textarea = document.getElementById('writing-textarea');
+
+const wordCountEl = document.getElementById('word-count-display');
+
+
+
+function updateWordCount() {
+
+    const text = textarea.value.trim();
+
+    const words = text === '' ? 0 : text.split(/\s+/).filter(w => w.length > 0).length;
+
+    wordCountEl.textContent = `Words: ${words}`;
+
+    answers[currentTask] = textarea.value;
+
+    updateFooterStatus();
+
+}
+
+
+
+textarea.addEventListener('input', updateWordCount);
+
+
+
+// =============================================
+
+// LOAD TASK
+
+// =============================================
+
+function loadTask(taskNum) {
+
+    currentTask = taskNum;
+
+    const task = taskNum === 1 ? testData.task1 : testData.task2;
+
+    
+
+    document.getElementById('part-title').textContent = task.title;
+
+    document.getElementById('part-instructions').textContent = task.instructions;
+
+    document.getElementById('task-content').innerHTML = task.content;
+
+    
+
+    textarea.value = answers[taskNum] || '';
+
+    updateWordCount();
+
+    
+
+    // Footer highlight - update which side is bold
+
+    const leftPart = document.getElementById('footer-left-part');
+
+    const rightPart = document.getElementById('footer-right-part');
+
+    
+
+    if (taskNum === 1) {
+
+        leftPart.style.fontWeight = '700';
+
+        leftPart.style.color = '#000000';
+
+        rightPart.style.fontWeight = '400';
+
+        rightPart.style.color = '#6b7280';
+
+    } else {
+
+        leftPart.style.fontWeight = '400';
+
+        leftPart.style.color = '#6b7280';
+
+        rightPart.style.fontWeight = '700';
+
+        rightPart.style.color = '#000000';
+
+    }
+
+    
+
+    // Nav buttons
+
+    document.getElementById('prev-task-btn').disabled = (taskNum === 1);
+
+    document.getElementById('next-task-btn').disabled = (taskNum === 2);
+
+    
+
+    // Scroll to top
+
+    document.getElementById('panel-left').scrollTop = 0;
+
+    textarea.focus();
+
+}
+
+
+
+function updateFooterStatus() {
+
+    // No longer needed - footer doesn't show status
+
+}
+
+
+
+// =============================================
+
+// NAV
+
+// =============================================
+
+document.getElementById('prev-task-btn').addEventListener('click', () => {
+
+    if(currentTask > 1) loadTask(currentTask - 1);
+
+});
+
+
+
+document.getElementById('next-task-btn').addEventListener('click', () => {
+
+    if(currentTask < 2) loadTask(currentTask + 1);
+
+});
+
+
+
+// =============================================
+
+// SUBMIT FUNCTION
+
+// =============================================
+
+async function handleSubmit() {
+
+    // Show styled submit confirmation modal
+
+    // Show word counts in modal
+
+    var t1w = (answers[1]||'').trim().split(/\s+/).filter(Boolean).length;
+
+    var t2w = (answers[2]||'').trim().split(/\s+/).filter(Boolean).length;
+
+    document.getElementById('modal-t1-words').textContent = t1w;
+
+    document.getElementById('modal-t2-words').textContent = t2w;
+
+    var warn = document.getElementById('modal-warning');
+
+    if (t1w < 150 || t2w < 250) {
+
+        warn.style.display = 'block';
+
+        var msgs = [];
+
+        if (t1w < 150) msgs.push('Task 1: ' + t1w + '/150 words');
+
+        if (t2w < 250) msgs.push('Task 2: ' + t2w + '/250 words');
+
+        warn.textContent = '⚠️ Below minimum: ' + msgs.join(' | ');
+
+    } else { warn.style.display = 'none'; }
+
+    document.getElementById('submit-modal').style.display = 'flex';
+
+    return;
+
+}
+
+
+
+async function doSubmit() {
+
+    document.getElementById('submit-modal').style.display = 'none';
+
+    
+
+    clearInterval(timerInterval);
+
+    const timeSpent = 3600 - Math.max(timeLeft, 0);
+
+    const t1words = (answers[1]||'').trim().split(/\s+/).filter(Boolean).length;
+
+    const t2words = (answers[2]||'').trim().split(/\s+/).filter(Boolean).length;
+
+
+
+    // Count sentences for AI
+
+    function countSentences(text) {
+
+        if (!text || !text.trim()) return 0;
+
+        return text.trim().split(/[.!?]+/).filter(function(s){ return s.trim().length > 3; }).length;
+
+    }
+
+    const t1sentences = countSentences(answers[1] || '');
+
+    const t2sentences = countSentences(answers[2] || '');
+
+
+
+    // Show loading overlay
+
+    document.getElementById('loading-overlay').style.display = 'flex';
+
+
+
+    try {
+
+        // Send to AI for evaluation
+
+        const res = await fetch('/check_writing_test.php', {
+
+            method: 'POST',
+
+            headers: {'Content-Type': 'application/json'},
+
+            body: JSON.stringify({
+
+                task1: answers[1] || '',
+
+                task2: answers[2] || '',
+
+                task1_topic: testData.task1.topicText,
+
+                task2_topic: testData.task2.topicText,
+
+                task1_sentences: t1sentences,
+
+                task2_sentences: t2sentences,
+
+                task1_words: t1words,
+
+                task2_words: t2words
+
+            })
+
+        });
+
+        const data = await res.json();
+
+
+
+        if (data.success && data.evaluation) {
+
+            // Save to DB
+
+            fetch('/save_writing_result.php', {
+
+                method: 'POST',
+
+                headers: {'Content-Type': 'application/json'},
+
+                body: JSON.stringify({
+
+                    test_number: TEST_NUMBER,
+
+                    task1_text: answers[1] || '',
+
+                    task2_text: answers[2] || '',
+
+                    task1_topic: testData.task1.topicText,
+
+                    task2_topic: testData.task2.topicText,
+
+                    evaluation: data.evaluation,
+
+                    time_spent: timeSpent,
+
+                    task1_words: t1words,
+
+                    task2_words: t2words
+
+                })
+
+            }).catch(function(){});
+
+
+
+            // Award coins
+
+            var band = data.evaluation.overall_band || 0;
+
+            var coins = 0;
+
+            if (band >= 8) coins = 30;
+
+            else if (band >= 7) coins = 20;
+
+            else if (band >= 6) coins = 15;
+
+            else if (band >= 4) coins = 10;
+
+            if (coins > 0) {
+
+                fetch('/award_xp.php', {
+
+                    method: 'POST',
+
+                    headers: {'Content-Type': 'application/json'},
+
+                    body: JSON.stringify({ type: 'writing_test', xp: coins })
+
+                }).catch(function(){});
+
+            }
+
+
+
+            // Show results
+
+            document.getElementById('loading-overlay').style.display = 'none';
+
+            showResults(data.evaluation, t1words, t2words, timeSpent);
+
+        } else {
+
+            document.getElementById('loading-overlay').style.display = 'none';
+
+            alert('Evaluation failed: ' + (data.message || 'Unknown error'));
+
+        }
+
+    } catch (err) {
+
+        document.getElementById('loading-overlay').style.display = 'none';
+
+        alert('Connection error. Please try again.');
+
+        console.error(err);
+
+    }
+
+}
+
+
+
+// =============================================
+
+// RESULTS SCREEN
+
+// =============================================
+
+function showResults(ev, t1w, t2w, spent) {
+
+    document.querySelector('header').style.display = 'none';
+
+    document.getElementById('instruction-bar').style.display = 'none';
+
+    document.getElementById('main-container').style.display = 'none';
+
+    document.querySelector('.writing-footer').style.display = 'none';
+
+    try { document.querySelector('[style*="bottom:90px"]').style.display = 'none'; } catch(x){}
+
+    
+
+    // FIX: Remove overflow:hidden so results can scroll
+
+    document.documentElement.classList.remove('overflow-hidden');
+
+    document.documentElement.style.overflow = 'auto';
+
+    document.documentElement.style.height = 'auto';
+
+    document.body.style.overflow = 'auto';
+
+    document.body.style.height = 'auto';
+
+    
+
+    var r = document.getElementById('results-screen');
+
+    r.style.display = 'block';
+
+    
+
+    var t1 = ev.task1 || {};
+
+    var t2 = ev.task2 || {};
+
+
+
+    // FIX: Proper IELTS overall band calculation (1/3 Task 1 + 2/3 Task 2)
+
+    var t1band = t1.band || 0;
+
+    var t2band = t2.band || 0;
+
+    var rawOverall = (t1band / 3) + (t2band * 2 / 3);
+
+    // Round to nearest 0.5
+
+    var ob = Math.round(rawOverall * 2) / 2;
+
+
+
+    function bc(b) { return b >= 7 ? '#16a34a' : b >= 6 ? '#d97706' : '#dc2626'; }
+
+    function esc(t) { var d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
+
+
+
+    var h = '';
+
+    // Header
+
+    h += '<div style="text-align:center;margin-bottom:28px;"><div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:2px;">Writing Test Report</div>';
+
+    h += '<h1 style="font-size:28px;font-weight:800;font-family:serif;margin-top:6px;">Your IELTS Writing Results</h1>';
+
+    h += '<p style="font-size:13px;color:#888;margin-top:4px;">Guest — ' + new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) + '</p>';
+
+    h += '<p style="font-size:12px;color:#aaa;">Time: ' + Math.round(spent/60) + ' min | Task 1: ' + t1w + ' words | Task 2: ' + t2w + ' words</p></div>';
+
+
+
+    // Overall band
+
+    h += '<div style="border:2px solid #000;border-radius:12px;padding:24px;text-align:center;margin-bottom:20px;">';
+
+    h += '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;">Overall Band Score</div>';
+
+    h += '<div style="font-size:52px;font-weight:800;color:' + bc(ob) + ';font-family:serif;">' + ob.toFixed(1) + '</div>';
+
+    if (ev.overall_summary) h += '<p style="font-size:13px;color:#888;max-width:500px;margin:8px auto 0;">' + ev.overall_summary + '</p>';
+
+    h += '</div>';
+
+
+
+    // Task 1 & 2 bands side by side
+
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">';
+
+    h += buildTaskCard('Task 1', t1, t1w);
+
+    h += buildTaskCard('Task 2', t2, t2w);
+
+    h += '</div>';
+
+
+
+    // Student's original text
+
+    h += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:16px;">';
+
+    h += '<div style="background:#f8fafc;padding:14px 18px;border-bottom:1px solid #e5e7eb;font-size:13px;font-weight:700;">📝 Your Task 1 Response <span style="font-weight:400;color:#888;">(' + t1w + ' words)</span></div>';
+
+    h += '<div style="padding:16px 18px;font-size:13px;line-height:1.8;color:#444;white-space:pre-wrap;max-height:300px;overflow-y:auto;">' + esc(answers[1] || '(empty)') + '</div></div>';
+
+
+
+    h += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:16px;">';
+
+    h += '<div style="background:#f8fafc;padding:14px 18px;border-bottom:1px solid #e5e7eb;font-size:13px;font-weight:700;">📝 Your Task 2 Response <span style="font-weight:400;color:#888;">(' + t2w + ' words)</span></div>';
+
+    h += '<div style="padding:16px 18px;font-size:13px;line-height:1.8;color:#444;white-space:pre-wrap;max-height:300px;overflow-y:auto;">' + esc(answers[2] || '(empty)') + '</div></div>';
+
+
+
+    // Task 1 detailed
+
+    h += buildTaskDetail('Task 1 — Sentence-by-Sentence Analysis', t1);
+
+    h += buildTaskDetail('Task 2 — Sentence-by-Sentence Analysis', t2);
+
+
+
+    // Strategic advice
+
+    if (ev.strategic_advice) {
+
+        h += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px;margin-bottom:14px;">';
+
+        h += '<h3 style="font-size:14px;font-weight:700;margin-bottom:8px;">🎯 Strategic Advice</h3>';
+
+        h += '<div style="font-size:13px;line-height:1.7;white-space:pre-wrap;">' + ev.strategic_advice + '</div></div>';
+
+    }
+
+
+
+    // Download button
+
+    h += '<div style="text-align:center;margin:24px 0;display:flex;gap:8px;justify-content:center;">';
+
+    h += '<button onclick="generateDocx()" style="padding:12px 28px;background:#000;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">📄 Download Report (.docx)</button>';
+
+    h += '<a href="index.html" style="padding:12px 28px;background:#fff;color:#000;border:1px solid #d1d5db;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;">← Back to Writing</a>';
+
+    h += '</div>';
+
+
+
+    r.innerHTML = h;
+
+    window._evaluation = ev;
+
+    window._t1w = t1w;
+
+    window._t2w = t2w;
+
+    window._spent = spent;
+
+    window.scrollTo(0, 0);
+
+}
+
+
+
+function buildTaskCard(label, t, wc) {
+
+    var b = t.band || 0;
+
+    var c = b >= 7 ? '#16a34a' : b >= 6 ? '#d97706' : '#dc2626';
+
+    var h = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px;text-align:center;">';
+
+    h += '<div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;">' + label + '</div>';
+
+    h += '<div style="font-size:36px;font-weight:800;color:' + c + ';font-family:serif;">' + b.toFixed(1) + '</div>';
+
+    h += '<div style="font-size:11px;color:#aaa;">' + wc + ' words</div>';
+
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:10px;font-size:11px;">';
+
+    h += '<div style="background:#f9fafb;border-radius:4px;padding:4px;">TA <strong>' + (t.ta_band||0).toFixed(1) + '</strong></div>';
+
+    h += '<div style="background:#f9fafb;border-radius:4px;padding:4px;">CC <strong>' + (t.cc_band||0).toFixed(1) + '</strong></div>';
+
+    h += '<div style="background:#f9fafb;border-radius:4px;padding:4px;">LR <strong>' + (t.lr_band||0).toFixed(1) + '</strong></div>';
+
+    h += '<div style="background:#f9fafb;border-radius:4px;padding:4px;">GRA <strong>' + (t.gra_band||0).toFixed(1) + '</strong></div>';
+
+    h += '</div></div>';
+
+    return h;
+
+}
+
+
+
+function buildTaskDetail(title, t) {
+
+    var h = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:16px;">';
+
+    
+
+    // Header with band
+
+    var tb = t.band || 0;
+
+    var tbc = tb >= 7 ? '#16a34a' : tb >= 6 ? '#d97706' : '#dc2626';
+
+    h += '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:18px 20px;display:flex;justify-content:space-between;align-items:center;">';
+
+    h += '<h3 style="font-size:16px;font-weight:700;color:#fff;">' + title + '</h3>';
+
+    h += '<div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 14px;"><span style="font-size:10px;color:rgba(255,255,255,0.6);display:block;text-align:center;">Band</span><span style="font-size:24px;font-weight:800;color:' + tbc + ';font-family:serif;display:block;text-align:center;">' + tb.toFixed(1) + '</span></div>';
+
+    h += '</div>';
+
+    
+
+    h += '<div style="padding:20px;">';
+
+
+
+    // 4 Criteria in grid
+
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">';
+
+    var criteria = [
+
+        {label:'Task Achievement',band:t.ta_band,fb:t.ta_feedback,icon:'🎯',color:'#8b5cf6'},
+
+        {label:'Coherence & Cohesion',band:t.cc_band,fb:t.cc_feedback,icon:'🔗',color:'#3b82f6'},
+
+        {label:'Lexical Resource',band:t.lr_band,fb:t.lr_feedback,icon:'📚',color:'#10b981'},
+
+        {label:'Grammar',band:t.gra_band,fb:t.gra_feedback,icon:'✏️',color:'#f59e0b'}
+
+    ];
+
+    criteria.forEach(function(c) {
+
+        var bc = (c.band||0) >= 7 ? '#16a34a' : (c.band||0) >= 6 ? '#d97706' : '#dc2626';
+
+        h += '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;border-left:3px solid ' + c.color + ';">';
+
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:11px;font-weight:700;">' + c.icon + ' ' + c.label + '</span>';
+
+        h += '<span style="font-size:20px;font-weight:800;color:' + bc + ';font-family:serif;">' + (c.band||0).toFixed(1) + '</span></div>';
+
+        h += '<p style="font-size:12px;color:#555;line-height:1.6;">' + (c.fb || '') + '</p></div>';
+
+    });
+
+    h += '</div>';
+
+
+
+    // Overall comment
+
+    if (t.overall_comment) {
+
+        h += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px;">';
+
+        h += '<div style="font-size:12px;font-weight:700;margin-bottom:4px;">💬 Examiner Comment</div>';
+
+        h += '<p style="font-size:13px;color:#555;line-height:1.7;">' + t.overall_comment + '</p></div>';
+
+    }
+
+
+
+    // Word count comment
+
+    if (t.word_count_comment) {
+
+        h += '<div style="font-size:12px;color:#888;margin-bottom:12px;padding:8px 12px;background:#fffbeb;border:1px solid #fef3c7;border-radius:6px;">📏 ' + t.word_count_comment + '</div>';
+
+    }
+
+
+
+    // Sentence corrections — the most important section
+
+    if (t.sentence_corrections && t.sentence_corrections.length) {
+
+        h += '<div style="margin-bottom:16px;"><div style="font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e5e7eb;">🔍 Sentence-by-Sentence Corrections</div>';
+
+        t.sentence_corrections.forEach(function(sc, i) {
+
+            h += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:6px;">';
+
+            h += '<div style="font-size:10px;font-weight:700;color:#aaa;margin-bottom:4px;">SENTENCE ' + (i+1) + '</div>';
+
+            h += '<div style="font-size:13px;color:#dc2626;text-decoration:line-through;margin-bottom:4px;line-height:1.6;">❌ ' + (sc.original||'') + '</div>';
+
+            h += '<div style="font-size:13px;color:#16a34a;font-weight:600;margin-bottom:4px;line-height:1.6;">✅ ' + (sc.corrected||'') + '</div>';
+
+            h += '<div style="font-size:12px;color:#666;line-height:1.5;background:#f9fafb;padding:8px 10px;border-radius:4px;border-left:3px solid #d1d5db;">📌 ' + (sc.explanation||'') + '</div>';
+
+            h += '</div>';
+
+        });
+
+        h += '</div>';
+
+    }
+
+
+
+    // Vocabulary upgrades
+
+    if (t.vocabulary_upgrades && t.vocabulary_upgrades.length) {
+
+        h += '<div style="margin-bottom:16px;"><div style="font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e5e7eb;">📖 Vocabulary Upgrades</div>';
+
+        h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+
+        t.vocabulary_upgrades.forEach(function(v) {
+
+            h += '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px;font-size:12px;">';
+
+            h += '<div><span style="color:#dc2626;text-decoration:line-through;">' + (v.basic||'') + '</span> → <strong style="color:#16a34a;">' + (v.advanced||'') + '</strong></div>';
+
+            if (v.example) h += '<div style="color:#888;margin-top:4px;font-style:italic;font-size:11px;">"' + v.example + '"</div>';
+
+            h += '</div>';
+
+        });
+
+        h += '</div></div>';
+
+    }
+
+
+
+    // Grammar structure suggestions
+
+    if (t.grammar_suggestions && t.grammar_suggestions.length) {
+
+        h += '<div style="margin-bottom:16px;"><div style="font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e5e7eb;">🧩 Grammar Upgrades — Advanced Structures</div>';
+
+        t.grammar_suggestions.forEach(function(g) {
+
+            h += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px;margin-bottom:6px;">';
+
+            h += '<div style="font-size:12px;color:#888;margin-bottom:4px;">Simple:</div>';
+
+            h += '<div style="font-size:13px;color:#dc2626;margin-bottom:6px;line-height:1.5;">' + (g.original||'') + '</div>';
+
+            h += '<div style="font-size:12px;color:#888;margin-bottom:4px;">Advanced:</div>';
+
+            h += '<div style="font-size:13px;color:#16a34a;font-weight:600;margin-bottom:6px;line-height:1.5;">' + (g.upgraded||'') + '</div>';
+
+            h += '<div style="font-size:11px;color:#0369a1;background:#e0f2fe;padding:6px 8px;border-radius:4px;">📐 ' + (g.rule||'') + '</div>';
+
+            h += '</div>';
+
+        });
+
+        h += '</div>';
+
+    }
+
+
+
+    // Argument analysis (Task 2 only)
+
+    if (t.argument_analysis) {
+
+        h += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px;margin-bottom:14px;">';
+
+        h += '<div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:4px;">🧠 Argument Analysis</div>';
+
+        h += '<p style="font-size:12px;color:#555;line-height:1.7;">' + t.argument_analysis + '</p></div>';
+
+    }
+
+
+
+    // Model paragraph
+
+    if (t.model_paragraph) {
+
+        h += '<div style="background:linear-gradient(145deg,#fffdf5,#f5efe3);border:1px solid #d4c5a9;border-radius:8px;padding:16px;margin-bottom:14px;">';
+
+        h += '<div style="font-size:12px;font-weight:700;color:#b45309;margin-bottom:6px;">🏆 Band 8+ Model Paragraph</div>';
+
+        h += '<p style="font-size:13px;line-height:1.8;font-style:italic;color:#555;">' + t.model_paragraph + '</p></div>';
+
+    }
+
+
+
+    // Strengths & improvements side by side
+
+    if (t.strengths || t.improvements) {
+
+        h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">';
+
+        if (t.strengths) {
+
+            h += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;">';
+
+            h += '<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:6px;">✅ What you did well</div>';
+
+            h += '<ul style="font-size:12px;line-height:1.7;padding-left:16px;color:#374151;margin:0;">';
+
+            (Array.isArray(t.strengths)?t.strengths:[t.strengths]).forEach(function(s){h+='<li style="margin-bottom:2px;">'+s+'</li>';});
+
+            h += '</ul></div>';
+
+        }
+
+        if (t.improvements) {
+
+            h += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;">';
+
+            h += '<div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:6px;">📈 Areas to improve</div>';
+
+            h += '<ul style="font-size:12px;line-height:1.7;padding-left:16px;color:#374151;margin:0;">';
+
+            (Array.isArray(t.improvements)?t.improvements:[t.improvements]).forEach(function(s){h+='<li style="margin-bottom:2px;">'+s+'</li>';});
+
+            h += '</ul></div>';
+
+        }
+
+        h += '</div>';
+
+    }
+
+
+
+    h += '</div></div>';
+
+    return h;
+
+}
+
+
+
+// =============================================
+
+// DOCX GENERATION
+
+// =============================================
+
+async function generateDocx() {
+
+    try {
+
+    var ev = window._evaluation;
+
+    if (!ev) { alert('No evaluation data available'); return; }
+
+    var t1 = ev.task1 || {};
+
+    var t2 = ev.task2 || {};
+
+
+
+    var D = docx;
+
+    var children = [];
+
+
+
+    function h1(text) { return new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, spacing:{before:300,after:120}, children:[new D.TextRun({text:text,font:'Arial',bold:true})] }); }
+
+    function h2(text) { return new D.Paragraph({ heading: D.HeadingLevel.HEADING_2, spacing:{before:240,after:100}, children:[new D.TextRun({text:text,font:'Arial',bold:true})] }); }
+
+    function p(text,opts) { return new D.Paragraph({ spacing:{after:80}, children:[new D.TextRun(Object.assign({text:text||'',font:'Arial',size:22},opts||{}))] }); }
+
+    function mp(runs) { return new D.Paragraph({ spacing:{after:80}, children:runs }); }
+
+    function b(text) { return new D.TextRun({text:text,font:'Arial',size:22,bold:true}); }
+
+    function n(text) { return new D.TextRun({text:text,font:'Arial',size:22}); }
+
+    function clr(text,color) { return new D.TextRun({text:text,font:'Arial',size:22,color:color,bold:true}); }
+
+
+
+    // Title
+
+    children.push(new D.Paragraph({alignment:D.AlignmentType.CENTER,spacing:{after:200},children:[new D.TextRun({text:'IELTS Writing Test — Evaluation Report',font:'Arial',size:32,bold:true})]}));
+
+    children.push(new D.Paragraph({alignment:D.AlignmentType.CENTER,spacing:{after:100},children:[n('Guest — '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}))]}));
+
+    children.push(new D.Paragraph({alignment:D.AlignmentType.CENTER,spacing:{after:100},children:[n('Task 1: '+window._t1w+' words | Task 2: '+window._t2w+' words | Time: '+Math.round(window._spent/60)+' min')]}));
+
+    children.push(new D.Paragraph({alignment:D.AlignmentType.CENTER,spacing:{after:300},children:[clr('Overall Band: '+(ev.overall_band||0).toFixed(1),(ev.overall_band||0)>=7?'16A34A':'D97706')]}));
+
+
+
+    // --- TASK 1 ---
+
+    children.push(h1('Task 1 — Band '+(t1.band||0).toFixed(1)));
+
+    children.push(p('Topic: '+testData.task1.topicText,{italic:true,color:'666666'}));
+
+    children.push(p(''));
+
+    children.push(mp([b('Your Response ('+window._t1w+' words):')]));
+
+    children.push(p(answers[1]||'(No answer)'));
+
+    children.push(p(''));
+
+
+
+    // T1 Criteria
+
+    [['Task Achievement','ta'],['Coherence & Cohesion','cc'],['Lexical Resource','lr'],['Grammar','gra']].forEach(function(c){
+
+        children.push(mp([b(c[0]+': '+(t1[c[1]+'_band']||0).toFixed(1)),n(' — '+(t1[c[1]+'_feedback']||''))]));
+
+    });
+
+
+
+    // T1 Sentence corrections
+
+    if (t1.sentence_corrections && t1.sentence_corrections.length) {
+
+        children.push(p(''));
+
+        children.push(h2('Sentence-by-Sentence Corrections (Task 1)'));
+
+        t1.sentence_corrections.forEach(function(sc,i) {
+
+            children.push(mp([b('Sentence '+(i+1)+':')]));
+
+            children.push(mp([clr('❌ ','DC2626'),new D.TextRun({text:sc.original||'',font:'Arial',size:20,strike:true})]));
+
+            children.push(mp([clr('✅ ','16A34A'),n(sc.corrected||'')]));
+
+            children.push(p('📌 '+(sc.explanation||''),{size:18,color:'666666',italic:true}));
+
+            children.push(p(''));
+
+        });
+
+    }
+
+
+
+    // T1 Vocabulary
+
+    if (t1.vocabulary_upgrades && t1.vocabulary_upgrades.length) {
+
+        children.push(h2('Vocabulary Upgrades (Task 1)'));
+
+        t1.vocabulary_upgrades.forEach(function(v) {
+
+            children.push(mp([clr(v.basic||'','DC2626'),n(' → '),clr(v.advanced||'','16A34A'),n(v.example ? '  ("'+v.example+'")' : '')]));
+
+        });
+
+    }
+
+
+
+    // T1 Grammar suggestions
+
+    if (t1.grammar_suggestions && t1.grammar_suggestions.length) {
+
+        children.push(h2('Grammar Upgrades (Task 1)'));
+
+        t1.grammar_suggestions.forEach(function(g) {
+
+            children.push(mp([n('Simple: '),new D.TextRun({text:g.original||'',font:'Arial',size:20,color:'DC2626'})]));
+
+            children.push(mp([n('Advanced: '),new D.TextRun({text:g.upgraded||'',font:'Arial',size:20,color:'16A34A',bold:true})]));
+
+            children.push(p('Rule: '+(g.rule||''),{size:18,color:'0369A1',italic:true}));
+
+            children.push(p(''));
+
+        });
+
+    }
+
+
+
+    if (t1.model_paragraph) { children.push(p('')); children.push(mp([b('Band 8+ Model: ')])); children.push(p(t1.model_paragraph,{italic:true})); }
+
+
+
+    // --- TASK 2 ---
+
+    children.push(new D.Paragraph({children:[],spacing:{after:300}}));
+
+    children.push(h1('Task 2 — Band '+(t2.band||0).toFixed(1)));
+
+    children.push(p('Topic: '+testData.task2.topicText,{italic:true,color:'666666'}));
+
+    children.push(p(''));
+
+    children.push(mp([b('Your Response ('+window._t2w+' words):')]));
+
+    children.push(p(answers[2]||'(No answer)'));
+
+    children.push(p(''));
+
+
+
+    [['Task Response','ta'],['Coherence & Cohesion','cc'],['Lexical Resource','lr'],['Grammar','gra']].forEach(function(c){
+
+        children.push(mp([b(c[0]+': '+(t2[c[1]+'_band']||0).toFixed(1)),n(' — '+(t2[c[1]+'_feedback']||''))]));
+
+    });
+
+
+
+    if (t2.sentence_corrections && t2.sentence_corrections.length) {
+
+        children.push(p(''));
+
+        children.push(h2('Sentence-by-Sentence Corrections (Task 2)'));
+
+        t2.sentence_corrections.forEach(function(sc,i) {
+
+            children.push(mp([b('Sentence '+(i+1)+':')]));
+
+            children.push(mp([clr('❌ ','DC2626'),new D.TextRun({text:sc.original||'',font:'Arial',size:20,strike:true})]));
+
+            children.push(mp([clr('✅ ','16A34A'),n(sc.corrected||'')]));
+
+            children.push(p('📌 '+(sc.explanation||''),{size:18,color:'666666',italic:true}));
+
+            children.push(p(''));
+
+        });
+
+    }
+
+
+
+    if (t2.vocabulary_upgrades && t2.vocabulary_upgrades.length) {
+
+        children.push(h2('Vocabulary Upgrades (Task 2)'));
+
+        t2.vocabulary_upgrades.forEach(function(v) {
+
+            children.push(mp([clr(v.basic||'','DC2626'),n(' → '),clr(v.advanced||'','16A34A'),n(v.example ? '  ("'+v.example+'")' : '')]));
+
+        });
+
+    }
+
+
+
+    if (t2.grammar_suggestions && t2.grammar_suggestions.length) {
+
+        children.push(h2('Grammar Upgrades (Task 2)'));
+
+        t2.grammar_suggestions.forEach(function(g) {
+
+            children.push(mp([n('Simple: '),new D.TextRun({text:g.original||'',font:'Arial',size:20,color:'DC2626'})]));
+
+            children.push(mp([n('Advanced: '),new D.TextRun({text:g.upgraded||'',font:'Arial',size:20,color:'16A34A',bold:true})]));
+
+            children.push(p('Rule: '+(g.rule||''),{size:18,color:'0369A1',italic:true}));
+
+            children.push(p(''));
+
+        });
+
+    }
+
+
+
+    if (t2.model_paragraph) { children.push(p('')); children.push(mp([b('Band 8+ Model: ')])); children.push(p(t2.model_paragraph,{italic:true})); }
+
+
+
+    if (ev.strategic_advice) { children.push(new D.Paragraph({children:[],spacing:{after:200}})); children.push(h2('Strategic Advice')); children.push(p(ev.strategic_advice)); }
+
+
+
+    var doc = new D.Document({ sections:[{properties:{},children:children}] });
+
+    var blob = await D.Packer.toBlob(doc);
+
+    var url = window.URL.createObjectURL(blob);
+
+    var a = document.createElement('a');
+
+    a.href = url;
+
+    a.download = 'IELTS_Writing_Report_'+new Date().toISOString().split('T')[0]+'.docx';
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    document.body.removeChild(a);
+
+    window.URL.revokeObjectURL(url);
+
+
+
+    } catch(err) {
+
+        console.error('DOCX error:', err);
+
+        alert('Could not generate document: ' + err.message);
+
+    }
+
+}
+
+
+
+// =============================================
+
+// INIT
+
+// =============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    loadTask(1);
+
+    updateTimer();
+
+    timerInterval = setInterval(updateTimer, 1000);
+
+
+
+    // ── IMAGE ZOOM (tap on mobile) ──
+
+    document.getElementById('panel-left').addEventListener('click', function(e) {
+
+        var img = e.target.closest('img');
+
+        if (!img) return;
+
+        var overlay = document.getElementById('img-zoom-overlay');
+
+        var zoomImg = document.getElementById('img-zoom-target');
+
+        zoomImg.src = img.src;
+
+        zoomImg.style.transform = 'scale(1)';
+
+        overlay.classList.add('active');
+
+
+
+        // Pinch-to-zoom
+
+        var startDist = 0, currentScale = 1;
+
+        overlay.addEventListener('touchstart', function(te) {
+
+            if (te.touches.length === 2) {
+
+                startDist = Math.hypot(te.touches[0].clientX - te.touches[1].clientX, te.touches[0].clientY - te.touches[1].clientY);
+
+            }
+
+        });
+
+        overlay.addEventListener('touchmove', function(te) {
+
+            if (te.touches.length === 2 && startDist > 0) {
+
+                var dist = Math.hypot(te.touches[0].clientX - te.touches[1].clientX, te.touches[0].clientY - te.touches[1].clientY);
+
+                var newScale = Math.max(1, Math.min(4, currentScale * (dist / startDist)));
+
+                zoomImg.style.transform = 'scale(' + newScale + ')';
+
+                te.preventDefault();
+
+            }
+
+        }, { passive: false });
+
+        overlay.addEventListener('touchend', function(te) {
+
+            if (te.touches.length < 2) {
+
+                var m = zoomImg.style.transform.match(/scale\(([^)]+)\)/);
+
+                currentScale = m ? parseFloat(m[1]) : 1;
+
+                if (currentScale < 1.1) { currentScale = 1; zoomImg.style.transform = 'scale(1)'; }
+
+                startDist = 0;
+
+            }
+
+        });
+
+    });
+
+
+
+    // ── KEYBOARD — keep layout stable on mobile ──
+
+    var writeArea = document.getElementById('writing-textarea');
+
+    if (writeArea) {
+
+        writeArea.addEventListener('focus', function() {
+
+            // Prevent scroll jump — just let keyboard overlay
+
+            setTimeout(function() { window.scrollTo(0, 0); }, 100);
+
+        });
+
+    }
+
+});
+
+
+
+// Image zoom close
+
+function closeZoom() {
+
+    var overlay = document.getElementById('img-zoom-overlay');
+
+    overlay.classList.remove('active');
+
+    document.getElementById('img-zoom-target').style.transform = 'scale(1)';
+
+}
+
+</script>
+
+
+
+<!-- Image Zoom Overlay (mobile tap to zoom) -->
+
+<div id="img-zoom-overlay" onclick="closeZoom()">
+
+    <img id="img-zoom-target" src="" alt="Zoomed image">
+
+    <button onclick="closeZoom()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+
+</div>
+
+
+
+<!-- Loading Overlay -->
+
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#1a1a2e,#16213e);align-items:center;justify-content:center;flex-direction:column;">
+
+    <div style="width:60px;height:60px;border:3px solid rgba(255,255,255,0.1);border-top-color:#7c3aed;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px;"></div>
+
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+    <h2 style="font-size:20px;font-weight:700;color:#fff;font-family:Arial,sans-serif;">Analyzing your writing...</h2>
+
+    <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:8px;">AI examiner is checking every sentence. 15–30 seconds.</p>
+
+    <div style="margin-top:24px;display:flex;gap:16px;font-size:12px;color:rgba(255,255,255,0.3);">
+
+        <span>✏️ Grammar</span><span>📚 Vocabulary</span><span>🔗 Coherence</span><span>🎯 Task Response</span>
+
+    </div>
+
+</div>
+
+
+
+<!-- Results Screen -->
+
+<div id="results-screen" style="display:none;max-width:800px;margin:0 auto;padding:32px 20px 60px;font-family:Arial,sans-serif;background:#f8f9fa;min-height:100vh;">
+
+</div>
+
+
+
+
+
+<!-- Submit Confirmation Modal -->
+
+<div id="submit-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+
+    <div style="background:#fff;border-radius:14px;max-width:420px;width:90%;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.3);">
+
+        <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:24px;text-align:center;">
+
+            <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+
+                <svg width="26" height="26" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+
+            </div>
+
+            <h3 style="font-size:18px;font-weight:700;color:#fff;margin:0;">Submit Your Test?</h3>
+
+            <p style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:6px;">Your answers will be evaluated by AI</p>
+
+        </div>
+
+        <div style="padding:20px;">
+
+            <div style="display:flex;gap:8px;font-size:13px;color:#555;margin-bottom:16px;">
+
+                <div style="flex:1;background:#f9fafb;border-radius:8px;padding:10px;text-align:center;">
+
+                    <div style="font-weight:700;color:#000;" id="modal-t1-words">0</div>
+
+                    <div style="font-size:11px;color:#888;">Task 1 words</div>
+
+                </div>
+
+                <div style="flex:1;background:#f9fafb;border-radius:8px;padding:10px;text-align:center;">
+
+                    <div style="font-weight:700;color:#000;" id="modal-t2-words">0</div>
+
+                    <div style="font-size:11px;color:#888;">Task 2 words</div>
+
+                </div>
+
+            </div>
+
+            <div id="modal-warning" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px;font-size:12px;color:#dc2626;margin-bottom:12px;text-align:center;"></div>
+
+            <div style="display:flex;gap:8px;">
+
+                <button onclick="document.getElementById('submit-modal').style.display='none'" style="flex:1;padding:12px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;border:1px solid #d1d5db;background:#fff;color:#333;font-family:Arial,sans-serif;">Cancel</button>
+
+                <button onclick="doSubmit()" style="flex:1;padding:12px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;border:none;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-family:Arial,sans-serif;">Submit & Score</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+        <!-- Watermark / Developer Credit -->
+        <div style="position: fixed; bottom: 8px; right: 12px; z-index: 9999; font-size: 11px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 6px; font-family: sans-serif; pointer-events: none;">
+            Makhmudov Abdullajon | By Yursinaliyev Muhammadaziz
+        </div>
+        
 </body>
+
 </html>

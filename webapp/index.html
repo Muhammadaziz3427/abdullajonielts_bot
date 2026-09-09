@@ -3,127 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IELTS Mock Portal | Abdullajon Makhmudov</title>
+  <title>CD IELTS Mock Portal | Makhmudov Abdullajon</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --primary: #2563eb;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      padding: 16px;
-      max-width: 600px;
-      margin: 0 auto;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header { text-align: center; padding: 20px 0; }
-    .badge {
-      display: inline-block;
-      background: #dbeafe;
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-    h1 { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
-    p.subtitle { font-size: 14px; color: var(--text-muted); }
-    .modules { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; flex: 1; }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      text-decoration: none;
-      color: inherit;
-    }
-    .card:active { transform: scale(0.98); border-color: var(--primary); }
-    .icon-box {
-      width: 50px; height: 50px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 24px; flex-shrink: 0;
-    }
-    .icon-reading { background: #fee2e2; color: #ef4444; }
-    .icon-listening { background: #e0e7ff; color: #4f46e5; }
-    .icon-writing { background: #fef3c7; color: #d97706; }
-    .card-info { flex: 1; }
-    .card-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-    .card-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-    .card-meta { display: flex; gap: 10px; margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
-    .arrow { font-size: 18px; color: var(--text-muted); }
-    footer { text-align: center; padding: 20px 0 10px; font-size: 12px; color: var(--text-muted); }
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
   </style>
 </head>
-<body>
-  <header>
-    <div class="badge">Makhmudov Abdullajon | IELTS 8.5</div>
-    <h1>IELTS Mock Exam Portal</h1>
-    <p class="subtitle">Haqiqiy imtihon formatida bilimingizni sinab ko'ring</p>
+<body class="min-h-screen flex flex-col text-slate-900">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 py-6 px-4 shadow-sm">
+    <div class="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2">
+          <span>Official CDI Format</span>
+          <span>•</span>
+          <span>IELTS 8.5</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Makhmudov Abdullajon</h1>
+        <p class="text-sm text-slate-500 font-medium">Computer-Delivered IELTS Mock Simulation Platform</p>
+      </div>
+      <div class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-mono border border-slate-200">
+        By <a href="https://t.me/yursinaliev" target="_blank" class="text-blue-600 font-semibold underline">Yursinaliyev Muhammadaziz</a>
+      </div>
+    </div>
   </header>
 
-  <main class="modules">
-    <a href="reading.html" class="card">
-      <div class="icon-box icon-reading">📖</div>
-      <div class="card-info">
-        <h3>IELTS Reading Mock #1</h3>
-        <p>Akademik matnlar, 40 ta savol va avtomatik Band hisoblash</p>
-        <div class="card-meta">
-          <span>⏱ 60 daqiqa</span>
-          <span>🎯 40 savol</span>
-          <span>⚡️ Avto-Band</span>
-        </div>
-      </div>
-      <div class="arrow">›</div>
-    </a>
+  <!-- Main Content -->
+  <main class="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-5">
 
-    <a href="listening.html" class="card">
-      <div class="icon-box icon-listening">🎧</div>
-      <div class="card-info">
-        <h3>IELTS Listening Mock #1</h3>
-        <p>4 ta audio part va avtomatik javoblar tahlili</p>
-        <div class="card-meta">
-          <span>⏱ 30 daqiqa</span>
-          <span>🎯 40 savol</span>
-          <span>🔊 Audio integratsiya</span>
-        </div>
+    <!-- Information Card -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+      <h2 class="text-lg sm:text-xl font-bold mb-2 flex items-center gap-2">
+        <span>⚡️</span> Haqiqiy CD IELTS Imtihoni Muhiti
+      </h2>
+      <p class="text-blue-100 text-sm leading-relaxed mb-4">
+        Ushbu simulyatorda rasmiy British Council & IDP Computer-Delivered IELTS imtihonining aynan o'zi yaratilgan: split-screen, 60 daqiqalik rasmiy taymer, 1 dan 40 gacha savollar navigatsiyasi va avtomatik Band Score baholash.
+      </p>
+      <div class="grid grid-cols-3 gap-2 text-center text-xs font-semibold bg-white/10 rounded-xl p-3 backdrop-blur-sm">
+        <div>⏱ 60 / 30 Min</div>
+        <div>🎯 40 Savol</div>
+        <div>📊 Avto-Band</div>
       </div>
-      <div class="arrow">›</div>
-    </a>
+    </div>
 
-    <a href="writing.html" class="card">
-      <div class="icon-box icon-writing">✍️</div>
-      <div class="card-info">
-        <h3>IELTS Writing Mock #1</h3>
-        <p>Task 1 (Report) va Task 2 (Essay) - avtomatik so'z hisoblagich bilan</p>
-        <div class="card-meta">
-          <span>⏱ 60 daqiqa</span>
-          <span>📊 So'zlar hisoblagichi</span>
-          <span>💡 Namuna insholar</span>
+    <!-- Modules List -->
+    <div class="flex flex-col gap-4">
+
+      <!-- Reading -->
+      <a href="reading.html" class="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-red-400 hover:shadow-md transition-all flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+          📖
         </div>
-      </div>
-      <div class="arrow">›</div>
-    </a>
+        <div class="flex-1">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-red-600 transition-colors">
+              CD IELTS Reading Mock #1
+            </h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">60 daqiqa</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 line-clamp-2">
+            3 ta akademik passage, 40 ta savol, split-screen o'qish va avtomatik IELTS Band (5.5 - 9.0) tahlili.
+          </p>
+        </div>
+        <div class="text-slate-400 text-xl font-bold group-hover:translate-x-1 transition-transform">›</div>
+      </a>
+
+      <!-- Listening -->
+      <a href="listening.html" class="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-400 hover:shadow-md transition-all flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+          🎧
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+              CD IELTS Listening Mock #1
+            </h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">30 daqiqa</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 line-clamp-2">
+            4 ta audio qism, rasmiy IELTS audio integratsiyasi va to'g'ri/noto'g'ri javoblarni avto-tekshirish.
+          </p>
+        </div>
+        <div class="text-slate-400 text-xl font-bold group-hover:translate-x-1 transition-transform">›</div>
+      </a>
+
+      <!-- Writing -->
+      <a href="writing.html" class="group bg-white border border-slate-200 rounded-2xl p-5 hover:border-amber-400 hover:shadow-md transition-all flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform flex-shrink-0">
+          ✍️
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
+              CD IELTS Writing Mock #1
+            </h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700">60 daqiqa</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 line-clamp-2">
+            Task 1 (Report 150+ so'z) va Task 2 (Essay 250+ so'z) - jonli so'z hisoblagich va namuna javoblar bilan.
+          </p>
+        </div>
+        <div class="text-slate-400 text-xl font-bold group-hover:translate-x-1 transition-transform">›</div>
+      </a>
+
+    </div>
+
   </main>
 
-  <footer>
-    <p>© 2026 Makhmudov Abdullajon IELTS System</p>
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+    <p class="font-semibold text-slate-700">Makhmudov Abdullajon | IELTS 8.5 Education System</p>
+    <p class="mt-1">Designed and Developed by <a href="https://t.me/yursinaliev" target="_blank" class="text-blue-600 font-bold hover:underline">Yursinaliyev Muhammadaziz</a></p>
   </footer>
 
   <script>
