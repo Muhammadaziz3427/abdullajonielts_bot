@@ -144,6 +144,17 @@ async def init_db() -> None:
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS lesson_materials (
+                id TEXT PRIMARY KEY,
+                lesson_id TEXT NOT NULL,
+                title TEXT,
+                file_id TEXT NOT NULL,
+                file_type TEXT DEFAULT 'document',
+                order_num INTEGER DEFAULT 1,
+                created_at TEXT,
+                FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
+            );
             """
         )
         await conn.commit()
@@ -534,8 +545,71 @@ async def delete_lesson(lesson_id: str) -> None:
     async with get_connection() as conn:
         await conn.execute("DELETE FROM quizzes WHERE lesson_id = ?;", (lesson_id,))
         await conn.execute("DELETE FROM user_progress WHERE lesson_id = ?;", (lesson_id,))
+        await conn.execute("DELETE FROM lesson_materials WHERE lesson_id = ?;", (lesson_id,))
         await conn.execute("DELETE FROM lessons WHERE id = ?;", (lesson_id,))
         await conn.commit()
+
+
+# ==========================================
+# LESSON MATERIALS (PDFs, Docs, Tasks)
+# ==========================================
+
+@retry_on_lock()
+async def add_lesson_material(
+    lesson_id: str,
+    title: str,
+    file_id: str,
+    file_type: str = "document",
+) -> str:
+    material_id = uuid.uuid4().hex[:12]
+    now = _utc_now()
+    async with get_connection() as conn:
+        cursor = await conn.execute(
+            "SELECT COALESCE(MAX(order_num), 0) + 1 as next_order FROM lesson_materials WHERE lesson_id = ?;",
+            (lesson_id,),
+        )
+        next_order = (await cursor.fetchone())["next_order"]
+
+        await conn.execute(
+            """
+            INSERT INTO lesson_materials (id, lesson_id, title, file_id, file_type, order_num, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+            """,
+            (material_id, lesson_id, title, file_id, file_type, next_order, now),
+        )
+        await conn.commit()
+    return material_id
+
+
+async def get_lesson_materials(lesson_id: str) -> list[dict[str, Any]]:
+    async with get_connection() as conn:
+        cursor = await conn.execute(
+            "SELECT * FROM lesson_materials WHERE lesson_id = ? ORDER BY order_num ASC, created_at ASC;",
+            (lesson_id,),
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+
+
+async def get_lesson_material(material_id: str) -> dict[str, Any] | None:
+    async with get_connection() as conn:
+        cursor = await conn.execute(
+            "SELECT * FROM lesson_materials WHERE id = ?;",
+            (material_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+
+@retry_on_lock()
+async def delete_lesson_material(material_id: str) -> None:
+    async with get_connection() as conn:
+        await conn.execute(
+            "DELETE FROM lesson_materials WHERE id = ?;",
+            (material_id,),
+        )
+        await conn.commit()
+
 
 
 # ==========================================

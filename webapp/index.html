@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS Mock Portal | Abdullajon Makhmudov</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header { text-align: center; padding: 20px 0; }
+    .badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    h1 { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    p.subtitle { font-size: 14px; color: var(--text-muted); }
+    .modules { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; flex: 1; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:active { transform: scale(0.98); border-color: var(--primary); }
+    .icon-box {
+      width: 50px; height: 50px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .icon-reading { background: #fee2e2; color: #ef4444; }
+    .icon-listening { background: #e0e7ff; color: #4f46e5; }
+    .icon-writing { background: #fef3c7; color: #d97706; }
+    .card-info { flex: 1; }
+    .card-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .card-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+    .card-meta { display: flex; gap: 10px; margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .arrow { font-size: 18px; color: var(--text-muted); }
+    footer { text-align: center; padding: 20px 0 10px; font-size: 12px; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">Makhmudov Abdullajon | IELTS 8.5</div>
+    <h1>IELTS Mock Exam Portal</h1>
+    <p class="subtitle">Haqiqiy imtihon formatida bilimingizni sinab ko'ring</p>
+  </header>
+
+  <main class="modules">
+    <a href="reading.html" class="card">
+      <div class="icon-box icon-reading">📖</div>
+      <div class="card-info">
+        <h3>IELTS Reading Mock #1</h3>
+        <p>Akademik matnlar, 40 ta savol va avtomatik Band hisoblash</p>
+        <div class="card-meta">
+          <span>⏱ 60 daqiqa</span>
+          <span>🎯 40 savol</span>
+          <span>⚡️ Avto-Band</span>
+        </div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+
+    <a href="listening.html" class="card">
+      <div class="icon-box icon-listening">🎧</div>
+      <div class="card-info">
+        <h3>IELTS Listening Mock #1</h3>
+        <p>4 ta audio part va avtomatik javoblar tahlili</p>
+        <div class="card-meta">
+          <span>⏱ 30 daqiqa</span>
+          <span>🎯 40 savol</span>
+          <span>🔊 Audio integratsiya</span>
+        </div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+
+    <a href="writing.html" class="card">
+      <div class="icon-box icon-writing">✍️</div>
+      <div class="card-info">
+        <h3>IELTS Writing Mock #1</h3>
+        <p>Task 1 (Report) va Task 2 (Essay) - avtomatik so'z hisoblagich bilan</p>
+        <div class="card-meta">
+          <span>⏱ 60 daqiqa</span>
+          <span>📊 So'zlar hisoblagichi</span>
+          <span>💡 Namuna insholar</span>
+        </div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+  </main>
+
+  <footer>
+    <p>© 2026 Makhmudov Abdullajon IELTS System</p>
+  </footer>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+  </script>
+</body>
+</html>

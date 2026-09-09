@@ -23,13 +23,17 @@ from config import ADMIN_ID
 from utils.db import (
     add_channel,
     add_lesson,
+    add_lesson_material,
     add_quiz,
     count_user_statuses,
     delete_channel,
     delete_lesson,
+    delete_lesson_material,
     delete_quizzes_for_lesson,
     get_all_users,
     get_lesson,
+    get_lesson_material,
+    get_lesson_materials,
     get_lessons,
     get_quizzes_for_lesson,
     get_required_channels,
@@ -58,6 +62,13 @@ class LessonEdit(StatesGroup):
     title = State()
     description = State()
     file = State()
+
+
+class MaterialCreation(StatesGroup):
+    lesson_id = State()
+    file_id = State()
+    file_type = State()
+    title = State()
 
 
 class QuizCreation(StatesGroup):
@@ -203,6 +214,16 @@ def _settings_keyboard() -> InlineKeyboardMarkup:
 def _lesson_actions(lesson_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="📎 Materiallar (PDF)",
+                    callback_data=f"admin:materials:{lesson_id}",
+                ),
+                InlineKeyboardButton(
+                    text="➕ PDF/Material biriktirish",
+                    callback_data=f"admin:material:add:{lesson_id}",
+                ),
+            ],
             [
                 InlineKeyboardButton(
                     text="📝 Test qo'shish",
@@ -393,13 +414,23 @@ async def admin_lesson_detail(callback: CallbackQuery) -> None:
         return
 
     quizzes = await get_quizzes_for_lesson(lesson_id)
-    media_type = "Video 🎥" if lesson.get("video_file_id") else ("PDF Hujjat 📄" if lesson.get("pdf_file_id") else "Faylsiz ❌")
+    materials = await get_lesson_materials(lesson_id)
+    media_type = "Video 🎥" if lesson.get("video_file_id") else ("Asosiy PDF 📄" if lesson.get("pdf_file_id") else "Asosiy videosiz ❌")
+
+    materials_info = ""
+    if materials:
+        materials_info = "\n\n📎 <b>Biriktirilgan materiallar (PDF/Fayllar):</b>\n" + "\n".join(
+            [f"• {m.get('title', 'Fayl')} ({m.get('file_type', 'fayl')})" for m in materials]
+        )
+    else:
+        materials_info = "\n\n📎 <b>Biriktirilgan materiallar:</b> Hozircha qo'shilmagan."
 
     text = (
         f"📖 <b>Dars:</b> {lesson['title']}\n\n"
         f"📝 <b>Tavsif:</b>\n{lesson.get('description', '')}\n\n"
-        f"📎 <b>Fayl turi:</b> {media_type}\n"
-        f"❓ <b>Biriktirilgan testlar:</b> {len(quizzes)} ta\n"
+        f"🎥 <b>Asosiy media:</b> {media_type}\n"
+        f"❓ <b>Biriktirilgan testlar:</b> {len(quizzes)} ta"
+        f"{materials_info}"
     )
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=_lesson_actions(lesson_id))
 
@@ -470,6 +501,212 @@ async def delete_lesson_handler(callback: CallbackQuery) -> None:
     lesson_id = callback.data.split(":", maxsplit=3)[3]
     await delete_lesson(lesson_id)
     await callback.message.edit_text("🗑 Dars o'chirildi.", reply_markup=_back_keyboard())
+
+
+# ==========================================
+# LESSON MATERIALS MANAGEMENT (PDFs & Files)
+# ==========================================
+
+@router.callback_query(F.data.startswith("admin:materials:"))
+async def admin_materials_list(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+
+    lesson_id = callback.data.split(":", maxsplit=2)[2]
+    lesson = await get_lesson(lesson_id)
+    if not lesson:
+        await callback.message.edit_text("Dars topilmadi.", reply_markup=_back_keyboard())
+        return
+
+    materials = await get_lesson_materials(lesson_id)
+    kb_rows = []
+    for m in materials:
+        m_title = m.get("title") or "Fayl"
+        kb_rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"🗑 O'chirish: {m_title}",
+                    callback_data=f"admin:material:del:{m['id']}:{lesson_id}",
+                )
+            ]
+        )
+    kb_rows.append(
+        [
+            InlineKeyboardButton(
+                text="➕ Yangi PDF/Material biriktirish",
+                callback_data=f"admin:material:add:{lesson_id}",
+            )
+        ]
+    )
+    kb_rows.append(
+        [
+            InlineKeyboardButton(
+                text="🔙 Darsga qaytish",
+                callback_data=f"admin:lesson:view:{lesson_id}",
+            )
+        ]
+    )
+
+    mat_count = len(materials)
+    await callback.message.edit_text(
+        f"📎 <b>«{lesson['title']}» darsining biriktirilgan materiallari:</b>\n\n"
+        f"Jami materiallar: {mat_count} ta.\n"
+        f"O'chirish uchun kerakli material ustiga bosing yoki yangi fayl qo'shing:",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_rows),
+    )
+
+
+@router.callback_query(F.data.startswith("admin:material:del:"))
+async def admin_material_delete(callback: CallbackQuery) -> None:
+    if not await _check_admin_callback(callback):
+        return
+
+    parts = callback.data.split(":")
+    mat_id = parts[3]
+    lesson_id = parts[4]
+    await delete_lesson_material(mat_id)
+    await callback.answer("✅ Material o'chirildi!", show_alert=True)
+
+    materials = await get_lesson_materials(lesson_id)
+    kb_rows = []
+    for m in materials:
+        m_title = m.get("title") or "Fayl"
+        kb_rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"🗑 O'chirish: {m_title}",
+                    callback_data=f"admin:material:del:{m['id']}:{lesson_id}",
+                )
+            ]
+        )
+    kb_rows.append(
+        [
+            InlineKeyboardButton(
+                text="➕ Yangi PDF/Material biriktirish",
+                callback_data=f"admin:material:add:{lesson_id}",
+            )
+        ]
+    )
+    kb_rows.append(
+        [
+            InlineKeyboardButton(
+                text="🔙 Darsga qaytish",
+                callback_data=f"admin:lesson:view:{lesson_id}",
+            )
+        ]
+    )
+    await callback.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_rows))
+
+
+@router.callback_query(F.data.startswith("admin:material:add:"))
+async def add_material_start(callback: CallbackQuery, state: FSMContext) -> None:
+    if not await _check_admin_callback(callback):
+        return
+
+    lesson_id = callback.data.split(":", maxsplit=3)[3]
+    await state.set_state(MaterialCreation.file_id)
+    await state.update_data(lesson_id=lesson_id)
+
+    await callback.message.edit_text(
+        "📎 <b>Darsga yangi PDF yoki material biriktirish:</b>\n\n"
+        "1-qadam: Biriktirmoqchi bo'lgan <b>PDF hujjat</b>, rasm yoki faylni yuboring:\n"
+        "(Bekor qilish uchun /cancel)",
+        parse_mode="HTML",
+    )
+
+
+@router.message(MaterialCreation.file_id)
+async def material_file_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+
+    file_id = None
+    file_type = "document"
+
+    if message.document:
+        file_id = message.document.file_id
+        file_type = "document"
+        default_title = message.document.file_name or "PDF Hujjat"
+    elif message.photo:
+        file_id = message.photo[-1].file_id
+        file_type = "photo"
+        default_title = "Rasm / Jadval"
+    elif message.video:
+        file_id = message.video.file_id
+        file_type = "video"
+        default_title = "Qo'shimcha video"
+    elif message.audio:
+        file_id = message.audio.file_id
+        file_type = "audio"
+        default_title = message.audio.file_name or "Audio fayl"
+    else:
+        await message.answer("Iltimos, fayl yuboring (PDF, hujjat, rasm yoki audio):")
+        return
+
+    caption = (message.caption or "").strip()
+    if caption:
+        data = await state.get_data()
+        lesson_id = data["lesson_id"]
+        await add_lesson_material(
+            lesson_id=lesson_id,
+            title=caption,
+            file_id=file_id,
+            file_type=file_type,
+        )
+        await state.clear()
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="➕ Yana material qo'shish", callback_data=f"admin:material:add:{lesson_id}")],
+                [InlineKeyboardButton(text="🔙 Darsga qaytish", callback_data=f"admin:lesson:view:{lesson_id}")],
+            ]
+        )
+        await message.answer(
+            f"✅ <b>Material muvaffaqiyatli biriktirildi!</b>\n\n📌 <b>Sarlavha:</b> {caption}",
+            parse_mode="HTML",
+            reply_markup=kb,
+        )
+        return
+
+    await state.update_data(file_id=file_id, file_type=file_type, default_title=default_title)
+    await state.set_state(MaterialCreation.title)
+    await message.answer(
+        f"2-qadam: Ushbu fayl uchun sarlavha (nom) kiriting:\n\n"
+        f"<i>(Masalan: «1-mavzu so'z boyligi (PDF)» yoki o'z holicha qoldirish uchun «+» yuboring)</i>",
+        parse_mode="HTML",
+    )
+
+
+@router.message(MaterialCreation.title)
+async def material_title_received(message: Message, state: FSMContext) -> None:
+    if not await _check_admin(message):
+        return
+
+    text = (message.text or "").strip()
+    data = await state.get_data()
+    lesson_id = data["lesson_id"]
+    file_id = data["file_id"]
+    file_type = data.get("file_type", "document")
+    title = text if text and text != "+" else data.get("default_title", "Material")
+
+    await add_lesson_material(
+        lesson_id=lesson_id,
+        title=title,
+        file_id=file_id,
+        file_type=file_type,
+    )
+    await state.clear()
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="➕ Yana material qo'shish", callback_data=f"admin:material:add:{lesson_id}")],
+            [InlineKeyboardButton(text="🔙 Darsga qaytish", callback_data=f"admin:lesson:view:{lesson_id}")],
+        ]
+    )
+    await message.answer(
+        f"✅ <b>Material muvaffaqiyatli biriktirildi!</b>\n\n📌 <b>Nomi:</b> {title}",
+        parse_mode="HTML",
+        reply_markup=kb,
+    )
 
 
 # ==========================================

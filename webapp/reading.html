@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS Reading Mock #1 | Abdullajon Makhmudov</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
+    
+    .top-bar {
+      position: sticky; top: 0; background: #fff; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .timer { font-size: 16px; font-weight: 700; color: #dc2626; background: #fee2e2; padding: 4px 10px; border-radius: 8px; }
+    .home-link { text-decoration: none; color: var(--primary); font-weight: 600; font-size: 14px; }
+    
+    .container { max-width: 800px; margin: 0 auto; padding: 16px; }
+    .passage-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px; margin-bottom: 20px; line-height: 1.6;
+    }
+    .passage-card h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
+    .passage-text { font-size: 14px; color: #334155; margin-bottom: 12px; }
+    
+    .questions-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px; margin-bottom: 20px;
+    }
+    .q-item { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+    .q-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+    .options label {
+      display: block; padding: 8px 12px; margin-bottom: 6px; border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s;
+    }
+    .options label:hover { background: #f8fafc; }
+    .options input[type="radio"] { margin-right: 8px; }
+    input[type="text"] {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 14px; margin-top: 4px;
+    }
+    input[type="text"]:focus { outline: none; border-color: var(--primary); }
+
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+      padding: 12px 16px; border-top: 1px solid var(--border);
+      display: flex; justify-content: center; z-index: 100;
+    }
+    .btn-submit {
+      background: var(--primary); color: #fff; border: none; padding: 12px 32px;
+      font-size: 15px; font-weight: 700; border-radius: 10px; cursor: pointer; width: 100%; max-width: 400px;
+    }
+    .result-modal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      z-index: 200; align-items: center; justify-content: center; padding: 16px;
+    }
+    .result-card {
+      background: #fff; border-radius: 16px; padding: 24px; max-width: 450px; width: 100%; text-align: center;
+    }
+    .band-circle {
+      width: 80px; height: 80px; border-radius: 50%; background: #dbeafe; color: var(--primary);
+      font-size: 28px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+      margin: 16px auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="index.html" class="home-link">← Chiqish</a>
+    <span style="font-weight: 700;">IELTS Reading Mock #1</span>
+    <div class="timer" id="timerDisplay">60:00</div>
+  </div>
+
+  <div class="container">
+    <!-- Passage 1 -->
+    <div class="passage-card">
+      <h2>READING PASSAGE 1: The Secrets of Sleep</h2>
+      <div class="passage-text">
+        <p>Sleep is a vital, often neglected, component of every human's overall health and well-being. Sleep is important because it enables the body to repair and be fit and ready for another day. Getting adequate rest may also help prevent excess weight gain, heart disease, and increased illness duration.</p>
+        <p style="margin-top:8px;">During sleep, your brain cycles through two types of sleep: rapid eye movement (REM) sleep and non-REM sleep. Non-REM sleep is essential for bone and muscle growth, tissue repair, and immune system replenishment. REM sleep plays an important role in memory consolidation and mood regulation.</p>
+      </div>
+    </div>
+
+    <!-- Questions 1-5 -->
+    <div class="questions-card">
+      <h3 style="margin-bottom: 14px; font-size: 16px;">Questions 1–5: Multiple Choice & True/False</h3>
+
+      <div class="q-item">
+        <div class="q-title">1. Why is sleep considered vital for the body?</div>
+        <div class="options">
+          <label><input type="radio" name="q1" value="A"> A) It stops brain activity completely</label>
+          <label><input type="radio" name="q1" value="B"> B) It enables the body to repair and prepare for the next day</label>
+          <label><input type="radio" name="q1" value="C"> C) It only affects mood and nothing else</label>
+        </div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-title">2. What happens during non-REM sleep?</div>
+        <div class="options">
+          <label><input type="radio" name="q2" value="A"> A) Muscle and tissue repair take place</label>
+          <label><input type="radio" name="q2" value="B"> B) Fast eye movement happens constantly</label>
+          <label><input type="radio" name="q2" value="C"> C) Only dreaming occurs</label>
+        </div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-title">3. REM sleep is primarily responsible for memory consolidation.</div>
+        <div class="options">
+          <label><input type="radio" name="q3" value="TRUE"> TRUE</label>
+          <label><input type="radio" name="q3" value="FALSE"> FALSE</label>
+          <label><input type="radio" name="q3" value="NOT GIVEN"> NOT GIVEN</label>
+        </div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-title">4. Complete the sentence (NO MORE THAN TWO WORDS): Adequate sleep may help prevent excess ________ gain.</div>
+        <input type="text" id="q4" placeholder="Javobingizni yozing...">
+      </div>
+
+      <div class="q-item">
+        <div class="q-title">5. Which system is replenished during non-REM sleep?</div>
+        <input type="text" id="q5" placeholder="Javobingizni yozing (masalan: immune)">
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="btn-submit" onclick="submitExam()">Testni Yakunlash (Finish)</button>
+  </div>
+
+  <!-- Result Modal -->
+  <div class="result-modal" id="resultModal">
+    <div class="result-card">
+      <h2 style="font-size: 20px;">🎉 Natijangiz Tayyor!</h2>
+      <div class="band-circle" id="bandScore">7.5</div>
+      <p id="scoreDetails" style="font-size: 15px; color: #475569; margin-bottom: 16px;">To'g'ri javoblar: 4 / 5</p>
+      <button class="btn-submit" onclick="closeExam()">Bosh sahifaga qaytish</button>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    // 60 minutes timer
+    let timeLeft = 60 * 60;
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerInterval = setInterval(() => {
+      timeLeft--;
+      let m = Math.floor(timeLeft / 60);
+      let s = timeLeft % 60;
+      timerDisplay.innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        submitExam();
+      }
+    }, 1000);
+
+    const correctAnswers = {
+      q1: "B",
+      q2: "A",
+      q3: "TRUE",
+      q4: "weight",
+      q5: "immune"
+    };
+
+    function submitExam() {
+      clearInterval(timerInterval);
+      let correct = 0;
+      let total = 5;
+
+      // Q1
+      const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+      if (q1 === correctAnswers.q1) correct++;
+
+      // Q2
+      const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+      if (q2 === correctAnswers.q2) correct++;
+
+      // Q3
+      const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+      if (q3 === correctAnswers.q3) correct++;
+
+      // Q4
+      const q4 = document.getElementById('q4').value.trim().toLowerCase();
+      if (q4.includes("weight")) correct++;
+
+      // Q5
+      const q5 = document.getElementById('q5').value.trim().toLowerCase();
+      if (q5.includes("immune")) correct++;
+
+      // Calculate IELTS Band Score (Demo scale)
+      let band = 5.0;
+      if (correct === 5) band = 8.5;
+      else if (correct === 4) band = 7.5;
+      else if (correct === 3) band = 6.5;
+      else if (correct === 2) band = 5.5;
+
+      document.getElementById('bandScore').innerText = band.toFixed(1);
+      document.getElementById('scoreDetails').innerText = `To'g'ri javoblar: ${correct} / ${total} ta | Band: ${band.toFixed(1)}`;
+      document.getElementById('resultModal').style.display = 'flex';
+
+      // Send data to Telegram Bot if WebApp is active
+      if (tg) {
+        try {
+          tg.sendData(JSON.stringify({
+            module: "Reading",
+            correct: correct,
+            total: total,
+            band: band.toFixed(1)
+          }));
+        } catch (e) { console.log(e); }
+      }
+    }
+
+    function closeExam() {
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>

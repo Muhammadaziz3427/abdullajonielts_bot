@@ -15,6 +15,7 @@ from aiogram.types import (
     KeyboardButton,
     Message,
     ReplyKeyboardMarkup,
+    WebAppInfo,
 )
 
 from config import ADMIN_ID
@@ -22,6 +23,7 @@ from utils.db import (
     credit_referral_if_eligible,
     get_leaderboard,
     get_lesson,
+    get_lesson_materials,
     get_lessons,
     get_quizzes_for_lesson,
     get_referral_channel,
@@ -49,9 +51,9 @@ def _main_menu_keyboard() -> ReplyKeyboardMarkup:
     """Persistent user bottom keyboard."""
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="📚 Darslar"), KeyboardButton(text="👤 Shaxsiy kabinet")],
-            [KeyboardButton(text="🏆 Reyting"), KeyboardButton(text="📢 Kanalimiz")],
-            [KeyboardButton(text="ℹ️ Yordam")],
+            [KeyboardButton(text="📚 Darslar"), KeyboardButton(text="📝 IELTS Mock Test")],
+            [KeyboardButton(text="👤 Shaxsiy kabinet"), KeyboardButton(text="🏆 Reyting")],
+            [KeyboardButton(text="📢 Kanalimiz"), KeyboardButton(text="ℹ️ Yordam")],
         ],
         resize_keyboard=True,
     )
@@ -388,27 +390,75 @@ async def lesson_view_handler(callback: CallbackQuery) -> None:
 
     video_file_id = lesson.get("video_file_id")
     pdf_file_id = lesson.get("pdf_file_id")
+    materials = await get_lesson_materials(lesson_id)
 
-    if video_file_id:
-        await callback.message.answer_video(
-            video=video_file_id,
-            caption=caption,
-            parse_mode="HTML",
-            reply_markup=kb,
-        )
-    elif pdf_file_id:
-        await callback.message.answer_document(
-            document=pdf_file_id,
-            caption=caption,
+    # If there are attached materials or multiple items:
+    if materials:
+        # 1. Send main video if available
+        if video_file_id:
+            await callback.message.answer_video(
+                video=video_file_id,
+                caption=caption,
+                parse_mode="HTML",
+            )
+        elif pdf_file_id:
+            await callback.message.answer_document(
+                document=pdf_file_id,
+                caption=caption,
+                parse_mode="HTML",
+            )
+        elif caption:
+            await callback.message.answer(
+                caption,
+                parse_mode="HTML",
+            )
+
+        # 2. Send each attached material (PDF, doc, photo, etc.)
+        for idx, m in enumerate(materials, 1):
+            m_title = m.get("title") or f"Material #{idx}"
+            m_type = m.get("file_type", "document")
+            m_cap = f"📎 <b>{m_title}</b>"
+
+            try:
+                if m_type == "photo":
+                    await callback.message.answer_photo(photo=m["file_id"], caption=m_cap, parse_mode="HTML")
+                elif m_type == "audio":
+                    await callback.message.answer_audio(audio=m["file_id"], caption=m_cap, parse_mode="HTML")
+                elif m_type == "video":
+                    await callback.message.answer_video(video=m["file_id"], caption=m_cap, parse_mode="HTML")
+                else:
+                    await callback.message.answer_document(document=m["file_id"], caption=m_cap, parse_mode="HTML")
+            except Exception as err:
+                logger.error("Material yuborishda xatolik (%s): %s", m.get("id"), err)
+
+        # 3. Finally send action keyboard
+        await callback.message.answer(
+            "📌 <i>Dars videosi va barcha biriktirilgan materiallarni to'liq o'rganib chiqqach, pastdagi tugma orqali davom eting:</i>",
             parse_mode="HTML",
             reply_markup=kb,
         )
     else:
-        await callback.message.answer(
-            caption or "Dars ma'lumotlari yuklanmoqda...",
-            parse_mode="HTML",
-            reply_markup=kb,
-        )
+        # Single item fallback
+        if video_file_id:
+            await callback.message.answer_video(
+                video=video_file_id,
+                caption=caption,
+                parse_mode="HTML",
+                reply_markup=kb,
+            )
+        elif pdf_file_id:
+            await callback.message.answer_document(
+                document=pdf_file_id,
+                caption=caption,
+                parse_mode="HTML",
+                reply_markup=kb,
+            )
+        else:
+            await callback.message.answer(
+                caption or "Dars ma'lumotlari yuklanmoqda...",
+                parse_mode="HTML",
+                reply_markup=kb,
+            )
 
 
 @router.callback_query(F.data == "lesson:list")
@@ -645,9 +695,104 @@ async def help_handler(message: Message) -> None:
     await message.answer(
         "ℹ️ <b>Botdan qanday foydalaniladi?</b>\n\n"
         "1. <b>📚 Darslar</b> — kurs darslarini ketma-ket tomosha qiling va testlarni yeching.\n"
-        "2. <b>👤 Shaxsiy kabinet</b> — o'zlashtirish foizingiz va taklif havolangizni oling.\n"
-        "3. <b>🏆 Reyting</b> — eng ko'p do'st chaqirgan yetakchilar ro'yxati.\n"
-        "4. Savol yoki takliflar bo'lsa adminga murojaat qiling.\n\n"
+        "2. <b>📝 IELTS Mock Test</b> — Reading, Listening va Writing bo'limlaridan haqiqiy mock testlar topshiring.\n"
+        "3. <b>👤 Shaxsiy kabinet</b> — o'zlashtirish foizingiz va taklif havolangizni oling.\n"
+        "4. <b>🏆 Reyting</b> — eng ko'p do'st chaqirgan yetakchilar ro'yxati.\n"
+        "5. Savol yoki takliflar bo'lsa adminga murojaat qiling.\n\n"
         "<i>By <a href='https://t.me/yursinaliev'>Yursinaliev Muhammadaziz</a></i>",
         parse_mode="HTML",
     )
+
+
+# ==========================================
+# IELTS MOCK TEST SECTION (WEB APP & INFO)
+# ==========================================
+
+@router.message(F.text == "📝 IELTS Mock Test")
+async def ielts_mock_menu_handler(message: Message) -> None:
+    if not await _subscription_gate(message):
+        return
+
+    webapp_url = await get_setting("mock_webapp_url", "")
+
+    rows = []
+    if webapp_url:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text="🚀 WebApp Mock Testni Ochish",
+                    web_app=WebAppInfo(url=webapp_url),
+                )
+            ]
+        )
+
+    rows.append(
+        [
+            InlineKeyboardButton(text="📖 Reading Mock #1", callback_data="mock:info:reading"),
+            InlineKeyboardButton(text="🎧 Listening Mock #1", callback_data="mock:info:listening"),
+        ]
+    )
+    rows.append(
+        [
+            InlineKeyboardButton(text="✍️ Writing Mock #1", callback_data="mock:info:writing"),
+        ]
+    )
+
+    text = (
+        "🎯 <b>IELTS Mock Exam Platform:</b>\n\n"
+        "Haqiqiy imtihon standartlari asosida tuzilgan Mock testlar:\n\n"
+        "• <b>Reading Mock:</b> 3 ta akademik passage, 40 ta savol, 60 daqiqa va avtomatik Band hisoblagich.\n"
+        "• <b>Listening Mock:</b> 4 ta audio qism, 40 ta savol, 30 daqiqa va avto-tahlil.\n"
+        "• <b>Writing Mock:</b> Task 1 (Report 150+ so'z) va Task 2 (Essay 250+ so'z) - jonli so'z hisoblagich bilan.\n\n"
+        "<i>Boshlash uchun kerakli bo'limni tanlang:</i>"
+    )
+    await message.answer(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
+
+
+@router.callback_query(F.data.startswith("mock:info:"))
+async def mock_info_callback(callback: CallbackQuery) -> None:
+    await callback.answer()
+    module = callback.data.split(":")[2]
+    webapp_url = await get_setting("mock_webapp_url", "")
+
+    if module == "reading":
+        title = "📖 IELTS Reading Mock #1"
+        info = (
+            "<b>Format:</b> 3 ta ilmiy-ommabop passage, 40 ta savol.\n"
+            "<b>Vaqt:</b> 60 daqiqa.\n"
+            "<b>Imkoniyat:</b> Test yakunida avtomatik ravishda IELTS Band Score (5.5 - 9.0) ballingiz chiqariladi."
+        )
+        sub_url = f"{webapp_url.rstrip('/')}/reading.html" if webapp_url else ""
+    elif module == "listening":
+        title = "🎧 IELTS Listening Mock #1"
+        info = (
+            "<b>Format:</b> 4 ta audio suhbat va ma'ruza, 40 ta savol.\n"
+            "<b>Vaqt:</b> 30 daqiqa + 10 daqiqa ko'chirish.\n"
+            "<b>Imkoniyat:</b> O'rnatilgan audio pleyer va avtomatik javoblar tahlili."
+        )
+        sub_url = f"{webapp_url.rstrip('/')}/listening.html" if webapp_url else ""
+    else:
+        title = "✍️ IELTS Writing Mock #1"
+        info = (
+            "<b>Format:</b> Task 1 (Academic Report, min 150 so'z) va Task 2 (Essay, min 250 so'z).\n"
+            "<b>Vaqt:</b> 60 daqiqa.\n"
+            "<b>Imkoniyat:</b> Jonli so'zlar hisoblagichi (Word Counter) va namuna insholar."
+        )
+        sub_url = f"{webapp_url.rstrip('/')}/writing.html" if webapp_url else ""
+
+    kb_rows = []
+    if sub_url:
+        kb_rows.append([InlineKeyboardButton(text="🚀 Testni Boshlash (Web App)", web_app=WebAppInfo(url=sub_url))])
+    kb_rows.append([InlineKeyboardButton(text="🔙 Orqaga", callback_data="mock:back")])
+
+    await callback.message.answer(
+        f"🎯 <b>{title}</b>\n\n{info}\n\n<i>Mock testlar fayllari bot serverida (<code>webapp/</code> papkasida) tayyorlangan.</i>",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_rows),
+    )
+
+
+@router.callback_query(F.data == "mock:back")
+async def mock_back_callback(callback: CallbackQuery) -> None:
+    await callback.answer()
+    await callback.message.delete()
