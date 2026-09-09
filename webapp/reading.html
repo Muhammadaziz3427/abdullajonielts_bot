@@ -6919,8 +6919,7 @@ body.theme-yellow .border-2.border-gray-400.p-4.bg-gray-50 strong {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 
 <body class="h-full overflow-hidden flex flex-col bg-white theme-white">
@@ -15595,8 +15594,7 @@ var RD_STEMS = (function () {
 
             const ansRows=r.results.map(x=>'<tr><td align="center">'+x.id+'</td><td align="center">'+(x.isCorrect?'Correct':'Incorrect')+'</td><td>'+(esc(x.user)||'&mdash;')+'</td><td>'+esc(x.correct)+'</td><td>'+esc(stripTags(x.explain))+'</td></tr>').join('');
 
-            const html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>CD IELTS Reading Mock #1 | Makhmudov Abdullajon</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head><body style=\"font-family:Calibri,Arial,sans-serif;color:#222\">"
+            const html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>CD IELTS Reading Mock #1 | Makhmudov Abdullajon</title></head><body style=\"font-family:Calibri,Arial,sans-serif;color:#222\">"
 
                 +'<h1 style="color:#1d4ed8">'+esc(testData.title)+' &mdash; Results</h1>'
 
@@ -15609,14 +15607,7 @@ var RD_STEMS = (function () {
                 +'<h2>Suggestions</h2><ul>'+sugg+'</ul>'
 
                 +'<h2>Answer review</h2><table border="1" cellspacing="0" cellpadding="6"><tr bgcolor="#e8efff"><th>Q</th><th>Result</th><th>Your answer</th><th>Correct answer</th><th>Explanation</th></tr>'+ansRows+'</table>'
-
-                +'
-        <!-- Watermark / Developer Credit -->
-        <div style="position: fixed; bottom: 8px; right: 12px; z-index: 9999; font-size: 11px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 6px; font-family: sans-serif; pointer-events: none;">
-            Makhmudov Abdullajon | By Yursinaliyev Muhammadaziz
-        </div>
-        
-</body></html>';
+                +'</body></html>';
 
             const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
 
@@ -22082,6 +22073,27 @@ var RD_STEMS = (function () {
             Makhmudov Abdullajon | By Yursinaliyev Muhammadaziz
         </div>
         
+
+    <script>
+      (function() {
+        try {
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+          }
+        } catch(e) {}
+        function safeDismiss() {
+          var ov = document.getElementById('test-loading-overlay');
+          if (ov) {
+            ov.classList.add('hide');
+            setTimeout(function() { ov.style.display = 'none'; }, 500);
+          }
+        }
+        setTimeout(safeDismiss, 1500);
+        window.addEventListener('load', function() { setTimeout(safeDismiss, 600); });
+      })();
+    </script>
 </body>
+
 
 </html>
