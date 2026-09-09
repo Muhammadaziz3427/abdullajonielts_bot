@@ -6914,6 +6914,8 @@ body.theme-yellow .border-2.border-gray-400.p-4.bg-gray-50 strong {
 
         }
 
+
+#login-gate { display: none !important; pointer-events: none !important; visibility: hidden !important; }
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -15222,7 +15224,23 @@ var RD_STEMS = (function () {
 
 
 
-        function submitTest() {
+        
+function sendTelegramResults(moduleName, correct, total, band) {
+    try {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.sendData(JSON.stringify({
+                module: moduleName,
+                correct: correct,
+                total: total,
+                band: band
+            }));
+        }
+    } catch(e) {
+        alert('Natija: ' + correct + '/' + total + ' (Band ' + band + ')');
+    }
+}
+
+function submitTest() {
 
             rdClearSave();          // the attempt is finished; nothing left to resume
 
@@ -16195,7 +16213,7 @@ var RD_STEMS = (function () {
 
                     '<button class="rs-btn" onclick="downloadResultsPDF()">' + I.down + 'Download PDF</button>' +
 
-                    '<button class="rs-btn" onclick="downloadResultsWord()">' + I.down + 'Download Word</button>' +
+                    '<button class="rs-btn" onclick="downloadResultsWord()">' + I.down + 'Download Word</button>' + '<button class="rs-btn" style="background:#2563eb;color:#fff;font-weight:700;" onclick="sendTelegramResults(\'Reading\', ' + correctAnswers + ', ' + totalQuestions + ', \'' + (r ? r.band : '7.0') + '\')">📤 Natijani Botga Yuborish</button>' +
 
                     '</div>';
 
@@ -16345,9 +16363,9 @@ var RD_STEMS = (function () {
 
         const RD_TOTAL_Q = testData.parts.reduce((n, p) => n + p.questions.length, 0);
 
-        const IS_LOGGED_IN = false;
-
-        const STUDENT_NAME = "";
+        const _tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) || null;
+          const IS_LOGGED_IN = true;
+          const STUDENT_NAME = _tgUser ? ((_tgUser.first_name || '') + (_tgUser.last_name ? ' ' + _tgUser.last_name : '')).trim() || 'Student' : 'Student';
 
         
 
@@ -17045,7 +17063,7 @@ var RD_STEMS = (function () {
 
             }
 
-            if (!IS_LOGGED_IN) {
+            if (false && !IS_LOGGED_IN) {
 
                 var lg = document.getElementById('login-gate');
 

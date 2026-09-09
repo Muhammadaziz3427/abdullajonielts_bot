@@ -3450,6 +3450,8 @@
 
         body.size-xl #test-taker-id span, body.size-xl .test-taker-id, body.size-xl .candidate-id { font-size: 19px !important; }
 
+
+#login-gate { display: none !important; pointer-events: none !important; visibility: hidden !important; }
 </style>
 
     <style>
@@ -10974,9 +10976,9 @@ function playScriptFrom(t, chip) {
 
         // ═════════════════════════════════════════════════════════════════
 
-        const IS_LOGGED_IN = false;
-
-        const STUDENT_NAME = "";
+        const _tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) || null;
+          const IS_LOGGED_IN = true;
+          const STUDENT_NAME = _tgUser ? ((_tgUser.first_name || '') + (_tgUser.last_name ? ' ' + _tgUser.last_name : '')).trim() || 'Student' : 'Student';
 
         const LISTENING_TEST_ID = 'listening-test-17';
 
@@ -11946,7 +11948,7 @@ function playScriptFrom(t, chip) {
 
             }
 
-            if (!IS_LOGGED_IN) {
+            if (false && !IS_LOGGED_IN) {
 
                 var lg = document.getElementById('login-gate');
 
@@ -13420,6 +13422,22 @@ function lsPlainScript(part) {
 
 
 
+
+function sendTelegramResults(moduleName, correct, total, band) {
+    try {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.sendData(JSON.stringify({
+                module: moduleName,
+                correct: correct,
+                total: total,
+                band: band
+            }));
+        }
+    } catch(e) {
+        alert('Natija: ' + correct + '/' + total + ' (Band ' + band + ')');
+    }
+}
+
 function submitTest() {
 
     const resultsModal = document.getElementById('results-modal');
@@ -13852,7 +13870,7 @@ function submitTest() {
 
                 '<button type="button" class="rs-dlbtn pdf" onclick="downloadResultsPDF()">' + I.down + 'Download PDF</button>' +
 
-                '<button type="button" class="rs-dlbtn doc" onclick="downloadResultsDOCX()">' + I.down + 'Download Word</button>' +
+                '<button type="button" class="rs-dlbtn doc" onclick="downloadResultsDOCX()">' + I.down + 'Download Word</button>' + '<button type="button" class="rs-dlbtn" style="background:#2563eb;color:#fff;font-weight:700;" onclick="sendTelegramResults(\'Listening\', ' + correctCount + ', 40, ' + bandNum + ')">📤 Natijani Botga Yuborish</button>' +
 
               '</div></div>';
 
